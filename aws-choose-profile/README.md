@@ -1,6 +1,5 @@
 # AWS Choose Profile, bash + python
 
-## Introduction:
 aws-choose-profile is a bash script that scans for profiles defined in ~/.aws/credentials and in ~/.aws/config and asks you to choose one of them, and then sets the AWS_PROFILE and AWS_DEFAULT_PROFILE environment variables for you from the chosen profile.  This is ONLY
 possible if you `source` this program (due to the way shell environments work).
 
@@ -29,6 +28,7 @@ cp -a aws-choose-profile* /usr/local/bin/
 ```
 
 ## Directions For Use:
+![Demo of aws-choose-profile](https://raw.githubusercontent.com/AndrewFarley/farley-aws-missing-tools/master/aws-choose-profile/demo.png "Demo of AWS Choose Profile helper")
 
 ```
 source aws-choose-profile
