@@ -5,12 +5,6 @@ possible if you `source` this program (due to the way shell environments work).
 
 If you do not source it, this script will detect this state and warn you about it, and not allow you to choose (since it's useless)
 
-## Todo:
-If you'd like to help contribute (or when the author is bored) there are some features that could be added...
-- Add ability to also set AWS_DEFAULT_REGION automatically based on the profile selected if that profile has a default region
-- Add another "wrapper" besides bash-based for use in powershell/windows?  Any windows geeks interested?
-- Others?  Submit feature requests as a bug in Github
-
 ## Installation:
 I recommend you symlink this into your user or system bin folder.  NOTE: if you choose to "install" this, you must also install
 the file "aws-choose-profile-helper.py" along side it, which has the the actual profile selection logic since mangling arrays and managing data is difficult in bash alone.  So
@@ -40,6 +34,13 @@ or even shorter with...
 
 ## Potential Use:
 For sysadmins and geeks who manage more than one AWS-based client and/or have multiple accounts to manage with consolidated billing, this script helps wranggle your local credentials to manage those various AWS accounts.
+
+
+## Todo:
+If you'd like to help contribute (or when the author is bored) there are some features that could be added...
+- Add ability to also set AWS_DEFAULT_REGION automatically based on the profile selected if that profile has a default region
+- Add another "wrapper" besides bash-based for use in powershell/windows?  Any windows geeks interested?
+- Others?  Submit feature requests as a bug in Github
 
 
 ## Additional Information:
