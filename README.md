@@ -6,3 +6,6 @@ A bash script that scans for profiles defined in ~/.aws/credentials and in ~/.aw
 
 # ec2-metadata
 A amazon-written helper that should really be automatically installed on every instance automatically IMHO to query the metadata.  It is easy enough to do on your own via curl, but it comes in handy to have a helper as well.
+
+## Contributing
+Feel free to contribute a tool you wrote that is missing in AWS via a pull request, or fix a bug in one of mine!
