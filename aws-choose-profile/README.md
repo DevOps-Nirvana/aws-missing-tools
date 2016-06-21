@@ -1,13 +1,15 @@
 # AWS Choose Profile, bash + python
 
+![Demo of aws-choose-profile](https://raw.githubusercontent.com/AndrewFarley/farley-aws-missing-tools/master/aws-choose-profile/demo.png "Demo of AWS Choose Profile helper")
+
 aws-choose-profile is a bash script that scans for profiles defined in ~/.aws/credentials and in ~/.aws/config and asks you to choose one of them, and then sets the AWS_PROFILE and AWS_DEFAULT_PROFILE environment variables for you from the chosen profile.  This is ONLY
 possible if you `source` this program (due to the way shell environments work).
 
-If you do not source it, this script will detect this state and warn you about it, and not allow you to choose (since it's useless)
+If you do not source it, this script will detect this state and warn you about it, no harm done
 
 ## Installation:
 I recommend you symlink this into your user or system bin folder.  NOTE: if you choose to "install" this, you must also install
-the file "aws-choose-profile-helper.py" along side it, which has the the actual profile selection logic since mangling arrays and managing data is difficult in bash alone.  So
+the file "aws-choose-profile-helper.py" along side it, which has the the actual profile selection logic since mangling arrays and managing data is difficult in bash alone.
 
 ### Installation Examples:
 
@@ -22,8 +24,6 @@ cp -a aws-choose-profile* /usr/local/bin/
 ```
 
 ## Directions For Use:
-![Demo of aws-choose-profile](https://raw.githubusercontent.com/AndrewFarley/farley-aws-missing-tools/master/aws-choose-profile/demo.png "Demo of AWS Choose Profile helper")
-
 ```
 source aws-choose-profile
 ```
@@ -41,7 +41,7 @@ If you'd like to help contribute (or when the author is bored) there are some fe
 - Add ability to also set AWS_DEFAULT_REGION automatically based on the profile selected if that profile has a default region
 - Add another "wrapper" besides bash-based for use in powershell/windows?  Any windows geeks interested?
 - Others?  Submit feature requests as a bug in Github
-
+- If desired, add support/debug/confirm working within other shells (sh, csh, ksh)
 
 ## Additional Information:
 - Author(s): Farley farley@neonsurge.com
