@@ -10,6 +10,8 @@ Original idea based on https://github.com/colinbjohnson/aws-missing-tools
 modified to detect if we are under an autoscaler and then send those metrics 
 to the autoscaler also
 
+NOTE: You may need to install boto3 on a default Ubuntu/CentOS install before this script will work
+
 Current incarnation by: Farley <farley@neonsurge.com>
 '''
 
