@@ -7,5 +7,8 @@ A bash script that scans for profiles defined in ~/.aws/credentials and in ~/.aw
 # ec2-metadata
 A amazon-written helper that should really be automatically installed on every instance automatically IMHO to query the metadata.  It is easy enough to do on your own via curl, but it comes in handy to have a helper as well.
 
+# aws-push-cloudwatch-instance-metrics
+This helper, intended to be run from cron every minute, pushes memory and disk usage to cloudwatch.  If this server is part of an autoscaling group, it also pushes against that dimension (within the EC2 namespace) to be able to query the autoscaler's combined memory & disk usage.
+
 ## Contributing
 Feel free to contribute a tool you wrote that is missing in AWS via a pull request, or fix a bug in one of mine!
