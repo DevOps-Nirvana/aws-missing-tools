@@ -1,0 +1,30 @@
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeKeyPairs",
+        "ec2:deleteKeyPair"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:TerminateInstances"
+      ],
+      
+      "Condition": {
+        "StringEquals": {
+          "ec2:ResourceTag/Name":"Packer Builder"
+        }
+      },
+      "Resource": [
+        "arn:aws:ec2:*"
+      ]
+    }
+  ]
+}
