@@ -12,5 +12,8 @@ A amazon-written helper that should really be automatically installed on every i
 # aws-push-cloudwatch-instance-metrics
 This helper, intended to be run from cron every minute, pushes memory and disk usage to cloudwatch.  If this server is part of an autoscaling group, it also pushes against that dimension (within the EC2 namespace) to be able to query the autoscaler's combined memory & disk usage.
 
+# aws-autoscaling-rollout
+Performs a gradual rollout of servers in an autoscaling group, although currently very simplified and hacked together, this is a placeholder for the "final" version that I have yet to migrate to Python (from shitty PHP) and open source.  I will do this soon, I promise!  People will proabably say that this is loosely based on the "aws-ha-release" tool from colinbjohnson, although the original took I wrote back in 2009 and has been pending open-sourcing forever
+
 ## Contributing
 Feel free to contribute a tool you wrote that is missing in AWS via a pull request, or fix a bug in one of mine!
