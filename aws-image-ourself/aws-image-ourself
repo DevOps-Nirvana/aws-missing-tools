@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# TODO ADD COMMENTS
+# Very simple helper to make an AMI of the server we're currently on
+# TODO: Migrate existing advanced PHP-based logic instead of this simple below logic 
+#
+EC2_INSTANCE_ID=$(curl --max-time 2 --silent http://169.254.169.254/latest/meta-data/instance-id)
+
+# Check if EC2_INSTANCE_ID is empty!  AKA, not on Amazon or no networking stack
+
+if [ $# -ge 1 ] 
+then
+        IMAGE_NAME=$1_$(date +%Y%m%d_%H%M%S)
+else
+        IMAGE_NAME=$(echo $EC2_INSTANCE_ID)_$(date +%Y%m%d_%H%M%S)
+fi
+
+
+echo "Our instance id: $EC2_INSTANCE_ID"
+echo "Creating image:  $IMAGE_NAME"
+echo -n "Please wait... "
+aws ec2 create-image --no-reboot --name $IMAGE_NAME --instance-id $EC2_INSTANCE_ID
