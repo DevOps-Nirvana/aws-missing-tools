@@ -1,8 +1,8 @@
-# AWS Choose Profile, bash + python
+# AWS Choose Profile, bash/fish + python
 
 ![Demo of aws-choose-profile](https://raw.githubusercontent.com/AndrewFarley/farley-aws-missing-tools/master/aws-choose-profile/demo.png "Demo of AWS Choose Profile helper")
 
-aws-choose-profile is a bash script that scans for profiles defined in ~/.aws/credentials and in ~/.aws/config and asks you to choose one of them, and then sets the AWS_PROFILE and AWS_DEFAULT_PROFILE environment variables for you from the chosen profile.  This is ONLY
+aws-choose-profile is a shell script (for bash/fish so far) that scans for profiles defined in ~/.aws/credentials and in ~/.aws/config and asks you to choose one of them, and then sets the AWS_PROFILE and AWS_DEFAULT_PROFILE environment variables for you from the chosen profile.  This is ONLY
 possible if you `source` this program (due to the way shell environments work).
 
 If you do not source it, this script will detect this state and warn you about it, no harm done
@@ -15,12 +15,20 @@ the file "aws-choose-profile-helper.py" along side it, which has the the actual 
 
 ```
 # Desired, symlink in place, so you can "git pull" and update this command from time to time
-ln -s $(pwd)/aws-choose-profile /usr/local/bin/
+# FOR Bash users
+ln -s $(pwd)/aws-choose-profile.bash /usr/local/bin/aws-choose-profile
+# FOR Fish users (from a fish shell)
+ln -s (pwd)/aws-choose-profile.fish /usr/local/bin/aws-choose-profile
 ```
 or copying it into place with...
 ```
 # Not desired, but possible depending on your preference
-cp -a aws-choose-profile* /usr/local/bin/
+# For Bash users
+cp -a aws-choose-profile.bash /usr/local/bin/aws-choose-profile
+# For Fish users
+cp -a aws-choose-profile.fish /usr/local/bin/aws-choose-profile
+# And also for all users
+ln -s $(pwd)/aws-choose-profile-helper.py /usr/local/bin/
 ```
 
 ## Directions For Use:
@@ -39,7 +47,7 @@ For sysadmins and geeks who manage more than one AWS-based client and/or have mu
 ## Todo:
 If you'd like to help contribute (or when the author is bored) there are some features that could be added...
 - Add ability to also set AWS_DEFAULT_REGION automatically based on the profile selected if that profile has a default region
-- Add another "wrapper" besides bash-based for use in powershell/windows?  Any windows geeks interested?
+- Add another "wrapper" besides bash/fish-based for use in other shells, or powershell?  Anyone interested?  Or request a feature and I'll add it.
 - Others?  Submit feature requests as a bug in Github
 - If desired, add support/debug/confirm working within other shells (sh, csh, ksh)
 

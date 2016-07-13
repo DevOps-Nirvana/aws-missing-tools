@@ -2,12 +2,15 @@
 #
 ###############################################################################
 #
-#    aws-choose-profile             Written by Farley <farley@neonsurge.com>
+#    aws-choose-profile.bash         Written by Farley <farley@neonsurge.com>
 #
 # This helper scans for profiles defined in ~/.aws/credentials and in 
 # ~/.aws/config and asks you to choose one of them, and then sets the 
 # AWS_PROFILE and AWS_DEFAULT_PROFILE environment variables.  This is ONLY
-# possible if you `source` this program
+# possible if you `source` this program in the `bash` shell, for other
+# shell wrappers, see the other files with different extensions, if you don't
+# see a shell you want, ask me and I'll add it!
+#
 # Usage example: 
 #    source aws-choose-profile
 # or
@@ -18,9 +21,9 @@
 # useless
 #
 # I recommend you symlink this into your user or system bin folder
-# Please note: if you choose to "install" this, you must also install
+# Please note: if you choose to install (aka cp) this, you must also install
 # the file "aws-choose-profile-helper.py" along side it, which has the the 
-# profile selection logic
+# aws profile selection logic
 #
 ###############################################################################
 
