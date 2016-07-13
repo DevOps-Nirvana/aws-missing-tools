@@ -24,11 +24,11 @@ or copying it into place with...
 ```
 # Not desired, but possible depending on your preference
 # For Bash users
-cp -a aws-choose-profile.bash /usr/local/bin/aws-choose-profile
+cp aws-choose-profile.bash /usr/local/bin/aws-choose-profile
 # For Fish users
-cp -a aws-choose-profile.fish /usr/local/bin/aws-choose-profile
+cp aws-choose-profile.fish /usr/local/bin/aws-choose-profile
 # And also for all users
-ln -s $(pwd)/aws-choose-profile-helper.py /usr/local/bin/
+cp aws-choose-profile-helper.py /usr/local/bin/
 ```
 
 ## Directions For Use:
