@@ -1,13 +1,24 @@
-
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "ec2:DescribeInstances",
         "ec2:DescribeKeyPairs",
-        "ec2:deleteKeyPair"
+        "ec2:DescribeSecurityGroups",
+        "ec2:deleteKeyPair",
+        "ec2:deleteSecurityGroup",
+        "ec2:describeRegions"
       ],
       "Resource": "*"
     },
