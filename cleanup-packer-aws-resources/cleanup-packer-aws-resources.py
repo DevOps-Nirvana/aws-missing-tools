@@ -1,4 +1,22 @@
 #!/usr/bin/env python
+#
+###############################################################################
+#
+#  cleanup-packer-aws-resources.py    Written by Farley <farley@neonsurge.com>
+#
+# Packer when used on an AWS account from tools like Jenkins or Rundeck, often
+# leaves reminants of its existance such as  instances running, security groups, 
+# and SSH keys.  This script scans all regions of AWS for leftover packer 
+# resources and removes them.
+#
+# This script can be run on the command-line standalone or ideally put into packer
+# and run via cloudwatch scheduled events like once a day or so
+#
+# This is from Farley's AWS missing tools
+#    https://github.com/AndrewFarley/farley-aws-missing-tools/
+#
+###############################################################################
+#
 from __future__ import print_function
 
 # For AWS
