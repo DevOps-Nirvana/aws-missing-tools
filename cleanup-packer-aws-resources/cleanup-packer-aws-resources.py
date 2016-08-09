@@ -12,11 +12,50 @@
 # This script can be run on the command-line standalone or ideally put into packer
 # and run via cloudwatch scheduled events like once a day or so
 #
+# NOTE: If you use this in AWS Lambda, please comment out the last line!  It's 
+#       not required but will make sure this script doesn't run an extra time
+#
 # This is from Farley's AWS missing tools
 #    https://github.com/AndrewFarley/farley-aws-missing-tools/
 #
 ###############################################################################
 #
+# Minimm AWS Permissions Necessary to run this script
+#
+# NOTE: The lambda:InvokeFunction is only needed if you want to run this from AWS Lambda
+#       Similar to the logs:* functions are only needed if you want to run from lambda and if you want logging
+#
+# {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#         {
+#             "Effect": "Allow",
+#             "Action": [
+#                 "logs:CreateLogGroup",
+#                 "logs:CreateLogStream",
+#                 "logs:DescribeLogGroups",
+#                 "logs:DescribeLogStreams",
+#                 "logs:PutLogEvents",
+#                 "ec2:DescribeRegions",
+#                 "ec2:DescribeInstances",
+#                 "ec2:DescribeKeyPairs",
+#                 "ec2:DescribeSecurityGroups",
+#                 "ec2:TerminateInstances",
+#                 "ec2:DeleteKeyPair",
+#                 "ec2:DeleteSecurityGroup"
+#             ],
+#            "Resource": "*"
+#         },
+#         {
+#           "Action": "lambda:InvokeFunction",
+#           "Effect": "Allow",
+#           "Resource": "*"
+#         }
+#     ]
+# }
+#
+###############################################################################
+
 from __future__ import print_function
 
 # For AWS
@@ -281,9 +320,6 @@ def lambda_handler(event, context):
             except:
                 print("Error while trying to terminate resources")
 
-
-
-    # TODO: Delete all the packer security groups?
 
 # NOTE: REMOVE THIS BELOW FOR RUNNING ON LAMBDA otherwise spinning this lambda
 #       up will already run its main logic.  Which is okay, but not really intended
