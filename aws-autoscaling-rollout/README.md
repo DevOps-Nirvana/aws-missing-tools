@@ -16,15 +16,22 @@ Some potential uses for aws-autoscaling-rollout are listed below:
 
 ## Simplified Logic Walkthrough:
 
-1. _(pre-logic)_ Check if this autoscaler name is valid and has no bad suspended processes
+1. _(pre-logic)_ Check if this autoscaler name is valid
+1. _(pre-logic)_ (if not --force) Check that this autoscaler has no bad suspended processes
 1. _(pre-logic)_ Wait for the autoscaler to "settle" (in-case it's mid-scaling activity)
+1. _(pre-logic)_ (if not --force) Check that every instance of the autoscaler is healthy on whatever CLB/ALBs its associated with
 1. _(pre-logic)_ Suspend various autoscaling processes so things like alarms or scheduled actions won't interrupt this deployment
 1. _(pre-logic)_ (if the desired capacity == max capacity) Scale up the max capacity by one
 1. _(main-loop)_ Wait for the number of servers on the autoscaler to equal the number of healthy servers on the CLB/ALBs
-1. _(main-loop)_ Scale up the desired capacity by one
-1. _(main-loop)_ Wait for the new server to get healthy in all attached CLB/TGs
+1. _(main-loop)_ Scale up the desired capacity by one, and wait for the autoscaler to show the new server as healthy (in the autoscaler)
+1. _(main-loop)_ (if not --skip-elb-health-check) Wait for the new server to get healthy in all attached CLB/TGs
+1. _(main-loop)_ (if --check-if-new-server-is-up-command ) Run the specified command every 10 seconds until it returns retval of 0
 1. _(main-loop)_ Detach one of the old instances from all attached CLB/TGs
-1. _(main-loop)_ Once fully detached from all CLB/TGs, shut down that old instance
+1. _(main-loop)_ Wait for the old instance to fully detach from all attached CLB/TGs (waits for connection draining and autoscaling detachment hooks)
+1. _(main-loop)_ (if --run-before-server-going-down-command) Run the specified command before terminating, it must return a retval of 0
+1. _(main-loop)_ (if --wait-for-seconds) Wait for --wait-for-seconds number of seconds before continuing
+1. _(main-loop)_ Terminate the old instance
+1. _(main-loop)_ (if --run-after-server-going-down-command) Run the specified command after terminating, it must return a retval of 0
 1. _(main-loop)_ Jump to the start of the main loop and repeat until all old instances are replaced
 1. _(cleanup)_ (if we changed the max capacity above) Shrink the max capacity by one
 1. _(cleanup)_ Un-suspend the suspended autoscaling processes

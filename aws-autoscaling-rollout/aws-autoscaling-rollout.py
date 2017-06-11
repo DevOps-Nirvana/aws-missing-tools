@@ -777,6 +777,18 @@ for i, instance in enumerate(instances_to_kill):
     print "Ensuring that we have the right number of instances on the autoscaler"
     wait_for_autoscaler_to_have_healthy_desired_instances( options.autoscaler )
 
+    # Wait for new instances to spin up...
+    while True:
+        print "Waiting for new instance(s) to spin up..."
+        # Lets figure out what the new instance ID(s) are here...
+        new_current_instance_list = get_autoscaler_healthy_instances(options.autoscaler)
+        new_instances = find_aws_instances_in_first_list_but_not_in_second(new_current_instance_list, current_instance_list)
+        if len(new_instances) == 0:
+            print "There are no new instances yet... waiting 10 seconds..."
+            time.sleep(10)
+        else:
+            break;
+    
     # Only if we instructed that we want to not skip the health checks on the way up
     if (not options.skip):
         # Wait to have healthy instances on the load balancers
@@ -792,18 +804,6 @@ for i, instance in enumerate(instances_to_kill):
             for name in autoscaler['TargetGroupARNs']:
                 print "Waiting for all instances to be healthy in " + name + "..."
                 wait_for_complete_targetgroup_autoscaler_attachment( name, options.autoscaler )
-
-    # Wait for new instances to spin up...
-    while True:
-        print "Waiting for new instance(s) to spin up..."
-        # Lets figure out what the new instance ID(s) are here...
-        new_current_instance_list = get_autoscaler_healthy_instances(options.autoscaler)
-        new_instances = find_aws_instances_in_first_list_but_not_in_second(new_current_instance_list, current_instance_list)
-        if len(new_instances) == 0:
-            print "There are no new instances yet... waiting 10 seconds..."
-            time.sleep(10)
-        else:
-            break;
 
     # Wait for instance to get healthy (custom handler) if desired...
     if (options.checkifnewserverisupcommand):
@@ -938,18 +938,19 @@ for i, instance in enumerate(instances_to_kill):
 instances_to_kill_flat = flatten_instance_health_array_from_loadbalancer( instances_to_kill )
 
 # Before exiting, just incase lets wait for proper detachment of the Classic ELBs (wait for: idle timeout / connection draining to finish)
-if len(autoscaler['LoadBalancerNames']) > 0:
-    print "Ensuring that these instances are fully detached from the load balancer(s)"
-    for name in autoscaler['LoadBalancerNames']:
-        print "Waiting for complete detachment of old instances from load balancer '" + name + "'..."
-        wait_for_instances_to_detach_from_loadbalancer( instances_to_kill_flat, name )
+if (not options.force):
+    if len(autoscaler['LoadBalancerNames']) > 0:
+        print "Ensuring that these instances are fully detached from the load balancer(s)"
+        for name in autoscaler['LoadBalancerNames']:
+            print "Waiting for complete detachment of old instances from load balancer '" + name + "'..."
+            wait_for_instances_to_detach_from_loadbalancer( instances_to_kill_flat, name )
 
-# Before exiting, just incase lets wait for proper detachment of the TGs (wait for: idle timeout / connection draining to finish)
-if len(autoscaler['TargetGroupARNs']) > 0:
-    print "Ensuring that these instances are fully detached from the target group(s)"
-    for name in autoscaler['TargetGroupARNs']:
-        print "Waiting for complete detachment of old instances from target group '" + name + "'..."
-        wait_for_instances_to_detach_from_target_group( instances_to_kill_flat, name )
+    # Before exiting, just incase lets wait for proper detachment of the TGs (wait for: idle timeout / connection draining to finish)
+    if len(autoscaler['TargetGroupARNs']) > 0:
+        print "Ensuring that these instances are fully detached from the target group(s)"
+        for name in autoscaler['TargetGroupARNs']:
+            print "Waiting for complete detachment of old instances from target group '" + name + "'..."
+            wait_for_instances_to_detach_from_target_group( instances_to_kill_flat, name )
 
 # This should never happen unless the above for loop breaks out unexpectedly
 if downscaled == False:
