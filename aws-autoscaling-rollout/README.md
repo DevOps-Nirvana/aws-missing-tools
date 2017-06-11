@@ -10,7 +10,7 @@ Some potential uses for aws-autoscaling-rollout are listed below:
 1. To rotate and refresh your instances to a fresh/vanilla state, all older EC2 instances can be replaced with newer EC2 instances.  This can help reset your instances incase logs or temporary files have filled up your instance, or your application has consumed all available RAM/Disk resources.
 
 ## Directions For Use:
-`AWS_DEFAULT_REGION=us-east-1 aws-ha-release.sh -a my-scaling-group`
+`AWS_DEFAULT_REGION=us-east-1 aws-autoscaling-rollout -a my-scaling-group`
 
 
 
@@ -65,7 +65,9 @@ continuing (if attached).  This applies to both Classic ELBs (CLB) and Applicati
 
 This script is written in python and requires a python interpreter, and it heavily leverages boto3, you will likely need to install boto3 with `pip install boto3`.  **NOTE:** Same as the AWS cli utilities, there is no option to set the AWS region or credentials in this script.  Boto automatically reads from typical AWS environment variables/profiles so to set the region/profile/credentials please use the typical aws cli methods to do so.  Eg:
 
-```AWS_DEFAULT_PROFILE=client_name AWS_DEFAULT_REGION=us-east-1 aws-autoscaling-rollout.py -a autoscalername```
+```
+AWS_DEFAULT_PROFILE=client_name AWS_DEFAULT_REGION=us-east-1 aws-autoscaling-rollout.py -a autoscalername
+```
 
 **WARNING:** This script does NOT work (yet) for doing rollouts of autoscaled groups that are
          attached to ALBs that are used in an ECS cluster.  That's a WHOLE other beast,
@@ -74,9 +76,7 @@ This script is written in python and requires a python interpreter, and it heavi
          it will have unexpected and most likely undesired results.  So be warned!!!!!!!
 
 Pieces of logic in this script are loosely based on (but intended to replace) the
-now abandoned "aws-ha-release" tool from Colin Johnson - colinbjohnson
-
-https://github.com/colinbjohnson/aws-missing-tools/tree/master/aws-ha-release
+now abandoned ["aws-ha-release"](https://github.com/colinbjohnson/aws-missing-tools/tree/master/aws-ha-release) tool from Colin Johnson
 
 This tool is also based on AWS deployment code pieces from numerous deployments scripts in
 bits and pieces I have written over the years, refactored/improved to add ALB support and unify
