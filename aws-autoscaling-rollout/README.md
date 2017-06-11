@@ -1,10 +1,69 @@
 # AWS Autoscaling Rollout
 
+## Introduction:
+aws-autoscaling-rollout allows the high-availability / no downtime replacement of all EC2 Instances in an Auto Scaling Group that is behind an Elastic Load Balancer.  It does this in a "rolling" fashion, one server at a time.
+
+## Potential Use:
+Some potential uses for aws-autoscaling-rollout are listed below:
+
+1. Delivery of new code or application logic, typically an autoscaler will be changed to launch a new launch configuration (eg: terraform).  Utilization of this script will cause the termination of EC2 instances in order to release new code in a High-Availability fashion without incurring any downtime.
+1. To rotate and refresh your instances to a fresh/vanilla state, all older EC2 instances can be replaced with newer EC2 instances.  This can help reset your instances incase logs or temporary files have filled up your instance, or your application has consumed all available RAM/Disk resources.
+
+## Directions For Use:
+`AWS_DEFAULT_REGION=us-east-1 aws-ha-release.sh -a my-scaling-group`
+
+
+
+## Simplified Logic Walkthrough:
+
+1. _(pre-logic)_ Check if this autoscaler name is valid and has no bad suspended processes
+1. _(pre-logic)_ Wait for the autoscaler to "settle" (in-case it's mid-scaling activity)
+1. _(pre-logic)_ Suspend various autoscaling processes so things like alarms or scheduled actions won't interrupt this deployment
+1. _(pre-logic)_ (if the desired capacity == max capacity) Scale up the max capacity by one
+1. _(main-loop)_ Wait for the number of servers on the autoscaler to equal the number of healthy servers on the CLB/ALBs
+1. _(main-loop)_ Scale up the desired capacity by one
+1. _(main-loop)_ Wait for the new server to get healthy in all attached CLB/TGs
+1. _(main-loop)_ Detach one of the old instances from all attached CLB/TGs
+1. _(main-loop)_ Once fully detached from all CLB/TGs, shut down that old instance
+1. _(main-loop)_ Jump to the start of the main loop and repeat until all old instances are replaced
+1. _(cleanup)_ (if we changed the max capacity above) Shrink the max capacity by one
+1. _(cleanup)_ Un-suspend the suspended autoscaling processes
+1. **Profit / Success!**
+
+
+
+## Script options:
+
+There are various options you can pass to aws-autoscaling-rollout to tweak its logic slightly to fit your deployment pattern, use-case, etc.  These have all been added based on various environments' needs to support their use-cases.  If there's a use-case that isn't handed in an option, perhaps submit a Github bug/feature request and I'll add it.  Or implement it yourself, and get me a Pull Request.  The current options are...
+
+### --force
+  If specified, then we want to force this deployment by skipping health pre-checks, and will ignore and reset currently suspended processes.  NOTE: This will NOT skip the external health check commands or wait for seconds options if you specify them.  This is to help deploy against
+  a environment which is currently unhealthy, down, or is having issues (eg: a few servers are unhealthy in an ELB but a few are healthy, you want to just push this rotation through to try to
+  move things ahead).
+
+### --skip-elb-health-check
+  If specified this script will skip the ELB health check of new instances as they come up (often used with --force.  Force above merely skips checking the CURRENT instances, not newly scaled up instances.  Warning: with --force and this option specified, your environment may go down, thus it won't be as "HA" as you might like.  This can be useful to deploy to a development environment
+  which may not be very stable in nature.
+
+### --wait-for-seconds
+  The number of extra seconds to wait in-between instance terminations (0 by default to disable).  This can be helpful if your instances need some time to cache or be "more" healthy after being marked healthy in a ELB.  Note: --force does NOT override this.
+
+### --check-if-new-server-is-up-command
+  This allows you to specify a custom one-liner shell command which can do an external health check against your newly created instance to verify a new instance is healthy before continuing deployment.  This should be a valid 'shell' command that can run on this server, it can include pipes to be able to run multiple commands.  This command supports _simple_ templating in the form of string replacing NEW_INSTANCE_ID, NEW_INSTANCE_PRIVATE_IP_ADDRESS, NEW_INSTANCE_PUBLIC_IP_ADDRESS.  Often used to do custom health checks when an autoscaler is not attached to an ELB, or to check that a new server joined a cluster properly before continuing (eg: Zookeeper, Kafka, Consul, etc).  This feature could also be used to add ECS support with a little creativity.  When this command returns a retval of 0 then the deployment continues
+
+### --run-before-server-going-down-command
+  This allows you to run an external command right before a server goes down, this is run BEFORE the wait-for-seconds (if provided).  This should be a valid 'shell' command that can run on this server.  This command supports _simple_ templating in the form of string replacing OLD_INSTANCE_ID, OLD_INSTANCE_PRIVATE_IP_ADDRESS, OLD_INSTANCE_PUBLIC_IP_ADDRESS.  Often used to do stuff like pull a server out of a cluster (eg: to force-leave a cluster, or to remove from a monitoring system).  This feature could also be used to add ECS support with a little creativity.  This command MUST return a retval of 0 otherwise this deployment will halt
+
+### --run-after-server-going-down-command
+  This is an external command that will run after the server gets sent the terminate command.  **WARNING**: Due to possible delays in Amazon's API and other factors it is not guaranteed that the server will be completely down when this command is run.  This should be a valid 'shell' command that can run on this server.  This command supports _simple_ templating in the form of string replacing OLD_INSTANCE_ID, OLD_INSTANCE_PRIVATE_IP_ADDRESS, OLD_INSTANCE_PUBLIC_IP_ADDRESS.  Often used to do stuff like pull a server out of a custom monitoring system (eg: Zabbix/Nagios).  This command MUST return a retval of 0 otherwise this deployment will hal
+
+
+## Detailed Description:
 This script does a rollout of an autoscaling group gradually, while waiting/checking
 that whatever Elastic Load Balancer (ELB) it is attached to is healthy before
 continuing (if attached).  This applies to both Classic ELBs (CLB) and Application Load Balancers (ALBs).
 
-This script heavily leverages boto3, you will likely need to install boto3.  **NOTE:** Same as the AWS cli utilities, there is no option to set the AWS region or credentials in this script.  Boto automatically reads from typical AWS environment variables/profiles so to set the region/profile/credentials please use the typical aws cli methods to do so.  Eg:
+This script is written in python and requires a python interpreter, and it heavily leverages boto3, you will likely need to install boto3 with `pip install boto3`.  **NOTE:** Same as the AWS cli utilities, there is no option to set the AWS region or credentials in this script.  Boto automatically reads from typical AWS environment variables/profiles so to set the region/profile/credentials please use the typical aws cli methods to do so.  Eg:
 
 ```AWS_DEFAULT_PROFILE=client_name AWS_DEFAULT_REGION=us-east-1 aws-autoscaling-rollout.py -a autoscalername```
 
@@ -37,15 +96,6 @@ or install as a super-user into your /usr/local/bin folder, depending on your pr
 sudo cp -a aws-autoscaling-rollout.py /usr/local/bin/
 ```
 
-## Directions For Use:
-```
-aws-autoscaling-rollout.py -a autoscaler_name
-```
-
-## Potential Use:
-Once an autoscaler has been changed to a new launch configuration (eg via Terraform) this script helps perform a "rolling" deploy of that autoscaling group, one by one starting up a new instance, waiting for it to get health, and then shutting down an old one.  When this script is done running, all the instances that were in the autoscaling group will have been terminated and replaced with all new instances of whatever launch configuration is set for the autoscaling group.
-
-
 ## Todo:
 * Implement a max-timeout feature, so you know when this script fails
 * Implement a check-interval feature, and use it script-wide to know how often to re-check on the status of things
@@ -55,7 +105,7 @@ Once an autoscaler has been changed to a new launch configuration (eg via Terraf
 
 
 ## Additional Information:
-- Author(s): Farley farley@neonsurge.com
+- Author(s): Farley farley@neonsurge.com / farley@olindata.com
 - First Published: 24-06-2016
 - Last Updated: 11-06-2017
 - Version 1.0.0

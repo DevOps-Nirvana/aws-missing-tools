@@ -18,13 +18,8 @@
 #          If you try to use this script against an autoscaler that is used in an ECS cluster
 #          it will have unexpected and most likely undesired results.  So be warned!!!!!!!
 #
-# Pieces of logic in this script are loosely based on (but intended to replace) the
-# now abandoned "aws-ha-release" tool from Colin Johnson - colinbjohnson
-#
-# https://github.com/colinbjohnson/aws-missing-tools/tree/master/aws-ha-release
-#
-# Also based on AWS deployment code pieces from numerous deployments scripts in
-# bits and pieces I have written over the years, refactored/improved to add ALB support.
+# The latest version of this code and more documentation can be found at:
+#       https://github.com/AndrewFarley/farley-aws-missing-tools
 #
 # Author:
 #       Farley <farley@neonsurge.com> <farley@olindata.com>
