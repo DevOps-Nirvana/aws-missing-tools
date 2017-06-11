@@ -1,7 +1,7 @@
 # AWS Autoscaling Rollout
 
 ## Introduction:
-aws-autoscaling-rollout allows the high-availability / no downtime replacement of all EC2 Instances in an Auto Scaling Group that is behind an Elastic Load Balancer.  It does this in a "rolling" fashion, one server at a time.
+aws-autoscaling-rollout allows the high-availability / no downtime replacement of all EC2 Instances in an Auto Scaling Group that is behind an Elastic Load Balancer.  It does this in a "rolling" fashion, one server at a time.  This script supports BOTH Application Load Balancers (ALB) and the "Classic" Load Balancers (CLB) from Amazon, but does **NOT currently support ECS**.
 
 ## Potential Use:
 Some potential uses for aws-autoscaling-rollout are listed below:
