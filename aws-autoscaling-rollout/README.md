@@ -22,7 +22,7 @@ Some potential uses for aws-autoscaling-rollout are listed below:
 1. _(pre-logic)_ (if not --force) Check that every instance of the autoscaler is healthy on whatever CLB/ALBs its associated with
 1. _(pre-logic)_ Suspend various autoscaling processes so things like alarms or scheduled actions won't interrupt this deployment
 1. _(pre-logic)_ (if the desired capacity == max capacity) Scale up the max capacity by one
-1. _(main-loop)_ Wait for the number of servers on the autoscaler to equal the number of healthy servers on the CLB/ALBs
+1. _(main-loop)_ Wait for the number of healthy servers on the autoscaler to equal the number of desired servers
 1. _(main-loop)_ Scale up the desired capacity by one, and wait for the autoscaler to show the new server as healthy (in the autoscaler)
 1. _(main-loop)_ (if not --skip-elb-health-check) Wait for the new server to get healthy in all attached CLB/TGs
 1. _(main-loop)_ (if --check-if-new-server-is-up-command ) Run the specified command every 10 seconds until it returns retval of 0
