@@ -127,32 +127,32 @@ def get_load_balancer( loadbalancer_name ):
 
 
 # Get a application load balancer
-# def get_application_load_balancer( loadbalancer_name ):
-#     try:
-#         fetched_data = elbv2.describe_load_balancers(
-#             Names=[
-#                 loadbalancer_name,
-#             ],
-#         )
-#         if len(fetched_data['LoadBalancers']) > 0:
-#             return fetched_data['LoadBalancers'][0]
-#     except Exception as e:
-#         raise Exception("Error searching for loadbalancer with name [{}]".format(loadbalancer_name), e)
-#     raise Exception("No loadbalancer found with name [{}]".format(loadbalancer_name))
+def get_application_load_balancer( loadbalancer_name ):
+    try:
+        fetched_data = elbv2.describe_load_balancers(
+            Names=[
+                loadbalancer_name,
+            ],
+        )
+        if len(fetched_data['LoadBalancers']) > 0:
+            return fetched_data['LoadBalancers'][0]
+    except Exception as e:
+        raise Exception("Error searching for loadbalancer with name [{}]".format(loadbalancer_name), e)
+    raise Exception("No loadbalancer found with name [{}]".format(loadbalancer_name))
 
 # Describe launch configuration
-# def describe_launch_configuration( launch_configuration_name ):
-#     try:
-#         fetched_data = autoscaling.describe_launch_configurations(
-#             LaunchConfigurationNames=[
-#                 launch_configuration_name,
-#             ],
-#         )
-#         if len(fetched_data['LaunchConfigurations']) > 0:
-#             return fetched_data['LaunchConfigurations'][0]
-#     except Exception as e:
-#         raise Exception("Error searching for launch configuration with name [{}]".format(launch_configuration_name), e)
-#     raise Exception("No launch configuration found with name [{}]".format(launch_configuration_name))
+def describe_launch_configuration( launch_configuration_name ):
+    try:
+        fetched_data = autoscaling.describe_launch_configurations(
+            LaunchConfigurationNames=[
+                launch_configuration_name,
+            ],
+        )
+        if len(fetched_data['LaunchConfigurations']) > 0:
+            return fetched_data['LaunchConfigurations'][0]
+    except Exception as e:
+        raise Exception("Error searching for launch configuration with name [{}]".format(launch_configuration_name), e)
+    raise Exception("No launch configuration found with name [{}]".format(launch_configuration_name))
 
 # Update auto scaling group max size
 def update_auto_scaling_group_max_size( autoscaling_group_name, max_size ):
@@ -167,19 +167,19 @@ def update_auto_scaling_group_max_size( autoscaling_group_name, max_size ):
         return False
 
 # Get target group
-# def get_target_group( target_group_name ):
-#     try:
-#         fetched_data = elbv2.describe_target_groups(
-#             Names=[
-#                 target_group_name
-#             ],
-#             PageSize=1
-#         )
-#         if len(fetched_data['TargetGroups']) > 0:
-#             return fetched_data['TargetGroups'][0]
-#     except Exception as e:
-#         raise Exception("Error searching for target group with name [{}]".format(target_group_name), e)
-#     raise Exception("No target group found with name [{}]".format(target_group_name))
+def get_target_group( target_group_name ):
+    try:
+        fetched_data = elbv2.describe_target_groups(
+            Names=[
+                target_group_name
+            ],
+            PageSize=1
+        )
+        if len(fetched_data['TargetGroups']) > 0:
+            return fetched_data['TargetGroups'][0]
+    except Exception as e:
+        raise Exception("Error searching for target group with name [{}]".format(target_group_name), e)
+    raise Exception("No target group found with name [{}]".format(target_group_name))
 
 
 # Get a autoscaling group
@@ -199,17 +199,17 @@ def get_autoscaling_group( autoscaling_group_name ):
 
 
 # Get all autoscaling groups
-# def get_all_autoscaling_groups( ):
-#     try:
-#         fetched_data = autoscaling.describe_auto_scaling_groups(
-#             MaxRecords=100
-#         )
-#
-#         if AutoScalingGroups in fetched_data:
-#             return fetched_data['AutoScalingGroups']
-#     except Exception as e:
-#         raise Exception("Error getting all autoscaling groups", e)
-#     raise Exception("Error getting all autoscaling groups")
+def get_all_autoscaling_groups( ):
+    try:
+        fetched_data = autoscaling.describe_auto_scaling_groups(
+            MaxRecords=100
+        )
+
+        if AutoScalingGroups in fetched_data:
+            return fetched_data['AutoScalingGroups']
+    except Exception as e:
+        raise Exception("Error getting all autoscaling groups", e)
+    raise Exception("Error getting all autoscaling groups")
 
 
 # Gets the suspended processes for an autoscaling group (by name or predefined to save API calls)
@@ -226,12 +226,12 @@ def get_suspended_processes( autoscaling_group_name_or_definition ):
     return output
 
 # Gets an single instance's details
-# def describe_instance(instance_id):
-#     # Get detailed instance information from the instances attached to the autoscaler
-#     instances = ec2.describe_instances(InstanceIds=[instance_id])
-#     for reservation in instances["Reservations"]:
-#         for instance in reservation["Instances"]:
-#             return instance
+def describe_instance(instance_id):
+    # Get detailed instance information from the instances attached to the autoscaler
+    instances = ec2.describe_instances(InstanceIds=[instance_id])
+    for reservation in instances["Reservations"]:
+        for instance in reservation["Instances"]:
+            return instance
 
 
 # Gets the suspended processes for an autoscaling group (by name or predefined to save API calls)
@@ -474,6 +474,111 @@ def wait_for_complete_targetgroup_autoscaler_attachment( target_group_arn, autos
         time.sleep( 10 )
 
 
+def wait_for_instances_to_detach_from_loadbalancer( instance_ids, loadbalancer_name ):
+    print "DEBUG: Waiting for detachment of instance_ids "
+    print(instance_ids)
+    print "   from load balancer:" + loadbalancer_name
+
+    while True:
+        loadbalancer = get_load_balancer(loadbalancer_name)
+        lb_instances = get_instance_ids_of_load_balancer(loadbalancer)
+
+        failures = 0
+        for instance in instance_ids:
+            print "  DEBUG: Checking if " + instance + " is attached to load balancer..."
+            if instance in lb_instances:
+                print "    ERROR: Currently attached to the load balancer..."
+                failures = failures + 1
+            else:
+                print "    SUCCESS: Instance is not attached to the load balancer"
+
+        if failures == 0:
+            print "SUCCESS: Done waiting for detachment of instance ids"
+            break
+
+        print "DEBUG: Waiting for 10 seconds and trying again..."
+        time.sleep( 10 )
+
+    print "DEBUG: DONE waiting for detachment of instances from " + loadbalancer_name
+
+
+
+def wait_for_instances_to_detach_from_target_group( instance_ids, target_group_arn ):
+    print "DEBUG: Waiting for detachment of instance_ids "
+    print(instance_ids)
+    print "   from target group:" + target_group_arn
+
+    while True:
+        targetgroup = get_target_group(target_group_arn)
+        tg_instances = get_instance_ids_of_target_group(target_group_arn)
+
+        failures = 0
+        for instance in instance_ids:
+            print "  DEBUG: Checking if " + instance + " is attached to load balancer..."
+            if instance in lb_instances:
+                print "    ERROR: Currently attached to the target group..."
+                failures = failures + 1
+            else:
+                print "    SUCCESS: Instance is not attached to the target group"
+
+        if failures == 0:
+            print "SUCCESS: Done waiting for detachment of instance ids"
+            break
+
+        print "DEBUG: Waiting for 10 seconds and trying again..."
+        time.sleep( 10 )
+
+    print "DEBUG: DONE waiting for detachment of instances from " + target_group_arn
+
+
+
+def wait_for_complete_targetgroup_autoscaler_detachment( target_group_arn, autoscaling_group_name ):
+
+    print "DEBUG: Waiting for detachment of autoscaler " + autoscaling_group_name + " from target_group_arn:" + target_group_arn
+
+    while True:
+        # Get instances from target group
+        print "DEBUG: Getting target group instances"
+        target_group = elbv2.describe_target_health(
+            TargetGroupArn=target_group_arn
+        )
+
+        # Get healthy instance ids from target group
+        print "DEBUG: Getting instance ids from load balancer"
+        instance_health_flat = []
+        for instance in target_group['TargetHealthDescriptions']:
+            instance_health_flat.append(instance['Target']['Id'])
+
+        # Get our healthy instances from our autoscaler
+        print "DEBUG: Getting healthy instances on our autoscaler"
+        as_instances = get_autoscaler_healthy_instances( autoscaling_group_name )
+
+        failures = 0
+        for instance in as_instances:
+            if instance['InstanceId'] in instance_health_flat:
+                print "DEBUG: FAIL - Instance " + instance['InstanceId'] + " from our autoscaler is still in our target group"
+                failures = failures + 1
+            else:
+                print "DEBUG: Success - Instance " + instance['InstanceId'] + " from our autoscaler is not in our target group"
+
+        if failures == 0:
+            print "DEBUG: SUCCESS - We have no instances from the autoscaling group on this target group..."
+            break
+        else:
+            print "WAIT: Found " + str(failures) + " instances still on the target group from the ASG.  Waiting 10 seconds..."
+
+        time.sleep( 10 )
+
+
+
+def flatten_instance_health_array_from_loadbalancer( input_instance_array ):
+    output = []
+    for instance in input_instance_array:
+        output.append(instance['InstanceId'])
+    return output
+
+
+
 def flatten_instance_health_array_from_loadbalancer_only_healthy( input_instance_array ):
     output = []
     for instance in input_instance_array:
@@ -548,7 +653,7 @@ def wait_for_complete_loadbalancer_autoscaler_attachment( loadbalancer_name, aut
 
 # Verify/get our load balancer
 print "Ensuring that \"" + options.autoscaler + "\" is a valid autoscaler in the current region..."
-autoscaler = aws.get_autoscaling_group(options.autoscaler)
+autoscaler = get_autoscaling_group(options.autoscaler)
 if autoscaler is False:
     print "ERROR: '" + options.autoscaler + "' is NOT a valid autoscaler, exiting..."
     parser.print_usage()
@@ -562,7 +667,7 @@ autoscaler_old_desired_capacity = int(autoscaler['DesiredCapacity'])
 print "Checking if our current desired size is equal to our max size (if so we have to increase max size to deploy)..."
 if autoscaler_old_max_size == autoscaler_old_desired_capacity:
     print "Updating max size of autoscaler by one from " + str(autoscaler_old_max_size)
-    if aws.update_auto_scaling_group_max_size(options.autoscaler, (autoscaler_old_max_size + 1) ) is True:
+    if update_auto_scaling_group_max_size(options.autoscaler, (autoscaler_old_max_size + 1) ) is True:
         print "Successfully expanded autoscalers max size temporarily for deployment..."
     else:
         print "Failed expanding max-size, will be unable to deploy (until someone implements a different mechanism to deploy)"
@@ -585,11 +690,11 @@ else:
 
 if (options.force):
     print "ALERT: We are force-deploying so we're going to skip checking for and setting suspended processes..."
-    aws.resume_all_processes( options.autoscaler )
+    resume_all_processes( options.autoscaler )
 else:
     print "Ensuring that we don't have certain suspended processes that we will need to proceed..."
     required_processes = ['Terminate','Launch','HealthCheck','AddToLoadBalancer']
-    suspended = aws.get_suspended_processes(autoscaler)
+    suspended = get_suspended_processes(autoscaler)
     succeed = True
     for process in required_processes:
         if process in suspended:
@@ -601,17 +706,17 @@ else:
 # Suspending processes so things on an autoscaler can settle
 print "Suspending processes so everything can settle on ELB/ALB/TGs: "
 suspend_new_processes = ['ScheduledActions', 'AlarmNotification', 'AZRebalance']
-aws.suspend_processes( options.autoscaler, suspend_new_processes )
+suspend_processes( options.autoscaler, suspend_new_processes )
 
 print "Waiting 3 seconds so the autoscaler can settle from the above change..."
 time.sleep(3)
 
 # Get our autoscaler info again... just-incase something changed on it before doing the below health-check logic...
-autoscaler = aws.get_autoscaling_group(options.autoscaler)
+autoscaler = get_autoscaling_group(options.autoscaler)
 
 # Wait to have healthy == desired instances on the autoscaler
 print "Ensuring that we have the right number of instances on the autoscaler"
-aws.wait_for_autoscaler_to_have_healthy_desired_instances(autoscaler)
+wait_for_autoscaler_to_have_healthy_desired_instances(autoscaler)
 
 # Only if we want to not force-deploy do we check if the instances get health on their respective load balancers/target groups
 if (not options.force):
@@ -620,26 +725,26 @@ if (not options.force):
         print "Ensuring that these instances are healthy on the load balancer(s)"
         for name in autoscaler['LoadBalancerNames']:
             print "Waiting for all instances to be healthy in " + name + "..."
-            aws.wait_for_complete_loadbalancer_autoscaler_attachment( name, options.autoscaler )
+            wait_for_complete_loadbalancer_autoscaler_attachment( name, options.autoscaler )
 
     # Wait to have healthy instances on the target groups
     if len(autoscaler['TargetGroupARNs']) > 0:
         print "Ensuring that these instances are healthy on the target group(s)"
         for name in autoscaler['TargetGroupARNs']:
             print "Waiting for all instances to be healthy in " + name + "..."
-            aws.wait_for_complete_targetgroup_autoscaler_attachment( name, options.autoscaler )
+            wait_for_complete_targetgroup_autoscaler_attachment( name, options.autoscaler )
 
 print "===================================================="
 print "Performing rollout..."
 print "===================================================="
 
 # Get our autoscaler info _one_ last time, to make sure we have the instances that we'll be rolling out of service...
-autoscaler = aws.get_autoscaling_group(options.autoscaler)
+autoscaler = get_autoscaling_group(options.autoscaler)
 
 # Gather the instances we need to kill...
-instances_to_kill = aws.get_autoscaler_healthy_instances(autoscaler)
+instances_to_kill = get_autoscaler_healthy_instances(autoscaler)
 # Keep a tally of current instances...
-current_instance_list = aws.get_autoscaler_healthy_instances(autoscaler)
+current_instance_list = get_autoscaler_healthy_instances(autoscaler)
 
 def find_aws_instances_in_first_list_but_not_in_second( array_one, array_two ):
     output = []
@@ -659,7 +764,7 @@ def find_aws_instances_in_first_list_but_not_in_second( array_one, array_two ):
 
 # Increase our desired size by one so a new instance will be started (usually from a new launch configuration)
 print "Increasing desired capacity by one from " + str(autoscaler['DesiredCapacity']) + " to " + str(autoscaler['DesiredCapacity'] + 1)
-aws.set_desired_capacity( options.autoscaler, autoscaler['DesiredCapacity'] + 1 )
+set_desired_capacity( options.autoscaler, autoscaler['DesiredCapacity'] + 1 )
 
 downscaled = False
 
@@ -671,11 +776,11 @@ for i, instance in enumerate(instances_to_kill):
     time.sleep(3)
 
     # This is used in the external "down" helper below, but we need to do this here before we start shutting down this instance
-    old_instance_details = aws.describe_instance(instance['InstanceId'])
+    old_instance_details = describe_instance(instance['InstanceId'])
 
     # Wait to have healthy == desired instances on the autoscaler
     print "Ensuring that we have the right number of instances on the autoscaler"
-    aws.wait_for_autoscaler_to_have_healthy_desired_instances( options.autoscaler )
+    wait_for_autoscaler_to_have_healthy_desired_instances( options.autoscaler )
 
     # Only if we instructed that we want to not skip the health checks on the way up
     if (not options.skip):
@@ -684,20 +789,20 @@ for i, instance in enumerate(instances_to_kill):
             print "Ensuring that these instances are healthy on the load balancer(s)"
             for name in autoscaler['LoadBalancerNames']:
                 print "Waiting for all instances to be healthy in " + name + "..."
-                aws.wait_for_complete_loadbalancer_autoscaler_attachment( name, options.autoscaler )
+                wait_for_complete_loadbalancer_autoscaler_attachment( name, options.autoscaler )
 
         # Wait to have healthy instances on the target groups
         if len(autoscaler['TargetGroupARNs']) > 0:
             print "Ensuring that these instances are healthy on the target group(s)"
             for name in autoscaler['TargetGroupARNs']:
                 print "Waiting for all instances to be healthy in " + name + "..."
-                aws.wait_for_complete_targetgroup_autoscaler_attachment( name, options.autoscaler )
+                wait_for_complete_targetgroup_autoscaler_attachment( name, options.autoscaler )
 
     # Wait for new instances to spin up...
     while True:
         print "Waiting for new instance(s) to spin up..."
         # Lets figure out what the new instance ID(s) are here...
-        new_current_instance_list = aws.get_autoscaler_healthy_instances(options.autoscaler)
+        new_current_instance_list = get_autoscaler_healthy_instances(options.autoscaler)
         new_instances = find_aws_instances_in_first_list_but_not_in_second(new_current_instance_list, current_instance_list)
         if len(new_instances) == 0:
             print "There are no new instances yet... waiting 10 seconds..."
@@ -712,7 +817,7 @@ for i, instance in enumerate(instances_to_kill):
             succeeded_health_up_check = True
             # String replacing the instance ID and/or the instance IP address into the external script
             for new_instance in new_instances:
-                instance_details = aws.describe_instance(new_instance['InstanceId'])
+                instance_details = describe_instance(new_instance['InstanceId'])
                 private_ip_address = instance_details['PrivateIpAddress']
                 if 'PublicIpAddress' in instance_details:
                     public_ip_address = instance_details['PublicIpAddress']
@@ -744,19 +849,19 @@ for i, instance in enumerate(instances_to_kill):
     if len(autoscaler['LoadBalancerNames']) > 0:
         for name in autoscaler['LoadBalancerNames']:
             print "De-registering " + instance['InstanceId'] + " from load balancer " + name + "..."
-            aws.deregister_instance_from_load_balancer( instance['InstanceId'], name )
+            deregister_instance_from_load_balancer( instance['InstanceId'], name )
 
     # If we have target groups...
     if len(autoscaler['TargetGroupARNs']) > 0:
         for name in autoscaler['TargetGroupARNs']:
             print "De-registering " + instance['InstanceId'] + " from target group " + name + "..."
-            aws.deregister_instance_from_target_group( instance['InstanceId'], name )
+            deregister_instance_from_target_group( instance['InstanceId'], name )
 
     # If we have load balancers...
     if len(autoscaler['LoadBalancerNames']) > 0:
         for name in autoscaler['LoadBalancerNames']:
             while True:
-                instance_ids = aws.get_instance_ids_of_load_balancer( name )
+                instance_ids = get_instance_ids_of_load_balancer( name )
                 print "Got instance ids..."
                 pprint(instance_ids)
                 if instance['InstanceId'] in instance_ids:
@@ -770,7 +875,7 @@ for i, instance in enumerate(instances_to_kill):
     if len(autoscaler['TargetGroupARNs']) > 0:
         for name in autoscaler['TargetGroupARNs']:
             while True:
-                instance_ids = aws.get_instance_ids_of_target_group( name )
+                instance_ids = get_instance_ids_of_target_group( name )
                 if instance['InstanceId'] in instance_ids:
                     print "Instance ID is still in target group, sleeping for 10 seconds..."
                     time.sleep(10)
@@ -804,16 +909,16 @@ for i, instance in enumerate(instances_to_kill):
 
     # Re-get our current instance list, for the custom health check script
     time.sleep(2)
-    current_instance_list = aws.get_autoscaler_healthy_instances(options.autoscaler)
+    current_instance_list = get_autoscaler_healthy_instances(options.autoscaler)
 
     # Now terminate our instance in our autoscaling group...
     # If this is our last time in this loop then we want to decrement the capacity along with it
     if (i + 1) == len(instances_to_kill):
-        aws.terminate_instance_in_auto_scaling_group( instance['InstanceId'], options.autoscaler, True )
+        terminate_instance_in_auto_scaling_group( instance['InstanceId'], options.autoscaler, True )
         downscaled = True
     # Otherwise, simply kill this server and wait for it to be replaced, keeping the desired capacity
     else:
-        aws.terminate_instance_in_auto_scaling_group( instance['InstanceId'], options.autoscaler )
+        terminate_instance_in_auto_scaling_group( instance['InstanceId'], options.autoscaler )
 
     # Run a command on server going down, if desired...
     if (options.runafterserverdowncommand):
@@ -835,25 +940,40 @@ for i, instance in enumerate(instances_to_kill):
         if (retval != 0):
             print "WARNING: Server down command returned retval of " + str(retval)
 
+instances_to_kill_flat = flatten_instance_health_array_from_loadbalancer( instances_to_kill )
+
+# Before exiting, just incase lets wait for proper detachment of the Classic ELBs (wait for: idle timeout / connection draining to finish)
+if len(autoscaler['LoadBalancerNames']) > 0:
+    print "Ensuring that these instances are fully detached from the load balancer(s)"
+    for name in autoscaler['LoadBalancerNames']:
+        print "Waiting for complete detachment of old instances from load balancer '" + name + "'..."
+        wait_for_instances_to_detach_from_loadbalancer( instances_to_kill_flat, name )
+
+# Before exiting, just incase lets wait for proper detachment of the TGs (wait for: idle timeout / connection draining to finish)
+if len(autoscaler['TargetGroupARNs']) > 0:
+    print "Ensuring that these instances are fully detached from the target group(s)"
+    for name in autoscaler['TargetGroupARNs']:
+        print "Waiting for complete detachment of old instances from target group '" + name + "'..."
+        wait_for_instances_to_detach_from_target_group( instances_to_kill_flat, name )
 
 # This should never happen unless the above for loop breaks out unexpectedly
 if downscaled == False:
     print "Manually decreasing desired capacity back to " + str(autoscaler_old_desired_capacity)
-    aws.set_desired_capacity( options.autoscaler, autoscaler_old_desired_capacity )
+    set_desired_capacity( options.autoscaler, autoscaler_old_desired_capacity )
 
 # Resume our processes...
 if (options.force):
     print "ALERT: Resuming all autoscaling processes because of --force..."
-    aws.resume_all_processes( options.autoscaler )
+    resume_all_processes( options.autoscaler )
 else:
     print "Resuming suspended processes..."
-    aws.resume_processes(options.autoscaler, suspend_new_processes)
+    resume_processes(options.autoscaler, suspend_new_processes)
 
 # Check if we need to decrease our max size back to what it was
 print "Checking if we changed our max size, if so, shrink it again..."
 if autoscaler_old_max_size == autoscaler_old_desired_capacity:
     print "Updating max size of autoscaler down one to " + str(autoscaler_old_max_size)
-    if aws.update_auto_scaling_group_max_size(options.autoscaler, autoscaler_old_max_size ) is True:
+    if update_auto_scaling_group_max_size(options.autoscaler, autoscaler_old_max_size ) is True:
         print "Successfully shrunk autoscalers max size back to its old value"
     else:
         print "Failed shrinking max-size for some reason"
