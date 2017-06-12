@@ -83,12 +83,13 @@ sudo cp -a aws-autoscaling-rollout.py /usr/local/bin/
 
 ## Simplified Logic Walkthrough:
 
-1. _(pre-logic)_ Check if this autoscaler name is valid
-1. _(pre-logic)_ (if not --force) Check that this autoscaler has no bad suspended processes
-1. _(pre-logic)_ Wait for the autoscaler to "settle" (in-case it's mid-scaling activity)
-1. _(pre-logic)_ (if not --force) Check that every instance of the autoscaler is healthy on whatever CLB/ALBs its associated with
-1. _(pre-logic)_ Suspend various autoscaling processes so things like alarms or scheduled actions won't interrupt this deployment
-1. _(pre-logic)_ (if the desired capacity == max capacity) Scale up the max capacity by one
+Described below is the step-by-step logic this script takes, for anyone who wants to know in detail what this script will do to your system, and/or for anyone who wishes to possible contribute feedback/patches to it.
+1. _(pre)_ Check if this autoscaler name is valid
+1. _(pre)_ (if not --force) Check that this autoscaler has no bad suspended processes
+1. _(pre)_ Wait for the autoscaler to "settle" (in-case it's mid-scaling activity)
+1. _(pre)_ (if not --force) Check that every instance of the autoscaler is healthy on whatever CLB/ALBs its associated with
+1. _(pre)_ Suspend various autoscaling processes so things like alarms or scheduled actions won't interrupt this deployment
+1. _(pre)_ (if the desired capacity == max capacity) Scale up the max capacity by one
 1. _(main-loop)_ Wait for the number of healthy servers on the autoscaler to equal the number of desired servers
 1. _(main-loop)_ Scale up the desired capacity by one, and wait for the autoscaler to show the new server as healthy (in the autoscaler)
 1. _(main-loop)_ (if not --skip-elb-health-check) Wait for the new server to get healthy in all attached CLB/TGs
@@ -106,12 +107,12 @@ sudo cp -a aws-autoscaling-rollout.py /usr/local/bin/
 
 
 ## Todo:
-* Implement a max-timeout feature, so you know when this script fails
-* Implement a check-interval feature, and use it script-wide to know how often to re-check on the status of things
+* Implement a max-timeout feature, so you know when this script fails so it won't infinite loop on a bad deploy.
+* Implement a check-interval feature, and use it script-wide to know how often to re-check on the status of things.  Right now most intervals are hardcoded to 10 seconds.
 * Support instances that are hosting ECS containers that are attached to an ALB
-* Implement the old (Farley/internal) deploy-servers sexy-CLI output so people are in awe
-  * Move all the "debug" output to a --verbose argument to clean the output up
-
+* Implement the old (PHP-based Farley/internal) deploy-servers sexy-CLI output so people are in awe of this awesome script
+* Move all the "debug/verbose" output to a --verbose argument to clean the output up, but to still allow people who want to debug or provide feedback to be able to provide logs.
+* Implement a retry mechanism to (try to) prevent errors if Amazon's API is being slow
 
 ## Additional Information:
 - Author(s): Farley farley@neonsurge.com / farley@olindata.com

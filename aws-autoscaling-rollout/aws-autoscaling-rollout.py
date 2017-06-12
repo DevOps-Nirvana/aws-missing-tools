@@ -779,16 +779,18 @@ for i, instance in enumerate(instances_to_kill):
 
     # Wait for new instances to spin up...
     while True:
-        print "Waiting for new instance(s) to spin up..."
+        print "Waiting for new instance(s) to spin up and have full information in them before continuing..."
         # Lets figure out what the new instance ID(s) are here...
         new_current_instance_list = get_autoscaler_healthy_instances(options.autoscaler)
         new_instances = find_aws_instances_in_first_list_but_not_in_second(new_current_instance_list, current_instance_list)
-        if len(new_instances) == 0:
+        if len(new_instances) > 0:
+            for new_instance in new_instances:
+                if 'InstanceId' in new_instance:
+                    break;
+        else:
             print "There are no new instances yet... waiting 10 seconds..."
             time.sleep(10)
-        else:
-            break;
-    
+
     # Only if we instructed that we want to not skip the health checks on the way up
     if (not options.skip):
         # Wait to have healthy instances on the load balancers
