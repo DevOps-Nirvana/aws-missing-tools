@@ -504,13 +504,21 @@ def wait_for_instances_to_detach_from_target_group( instance_ids, target_group_a
     print "   from target group:" + target_group_arn
 
     while True:
-        targetgroup = get_target_group(target_group_arn)
-        tg_instances = get_instance_ids_of_target_group(target_group_arn)
+        print "DEBUG: Getting target group instances"
+        target_group = elbv2.describe_target_health(
+            TargetGroupArn=target_group_arn
+        )
+
+        # Get healthy instance ids from target group
+        print "DEBUG: Getting instance ids from load balancer"
+        instance_health_flat = []
+        for instance in target_group['TargetHealthDescriptions']:
+            instance_health_flat.append(instance['Target']['Id'])
 
         failures = 0
-        for instance in instance_ids:
+        for instance in instance_health_flat:
             print "  DEBUG: Checking if " + instance + " is attached to load balancer..."
-            if instance in lb_instances:
+            if instance in instance_ids:
                 print "    ERROR: Currently attached to the target group..."
                 failures = failures + 1
             else:
