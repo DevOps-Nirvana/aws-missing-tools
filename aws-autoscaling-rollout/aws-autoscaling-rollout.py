@@ -779,17 +779,15 @@ for i, instance in enumerate(instances_to_kill):
 
     # Wait for new instances to spin up...
     while True:
-        print "Waiting for new instance(s) to spin up and have full information in them before continuing..."
+        print "Waiting for new instance(s) to spin up..."
         # Lets figure out what the new instance ID(s) are here...
         new_current_instance_list = get_autoscaler_healthy_instances(options.autoscaler)
         new_instances = find_aws_instances_in_first_list_but_not_in_second(new_current_instance_list, current_instance_list)
-        if len(new_instances) > 0:
-            for new_instance in new_instances:
-                if 'InstanceId' in new_instance:
-                    break;
-        else:
+        if len(new_instances) == 0:
             print "There are no new instances yet... waiting 10 seconds..."
             time.sleep(10)
+        else:
+            break;
 
     # Only if we instructed that we want to not skip the health checks on the way up
     if (not options.skip):
@@ -814,24 +812,27 @@ for i, instance in enumerate(instances_to_kill):
             succeeded_health_up_check = True
             # String replacing the instance ID and/or the instance IP address into the external script
             for new_instance in new_instances:
-                instance_details = describe_instance(new_instance['InstanceId'])
-                private_ip_address = instance_details['PrivateIpAddress']
-                if 'PublicIpAddress' in instance_details:
-                    public_ip_address = instance_details['PublicIpAddress']
-                    print "Found new instance " + new_instance['InstanceId'] + " with private IP address " + private_ip_address + " and public IP " + public_ip_address
-                else:
-                    print "Found new instance " + new_instance['InstanceId'] + " with private IP address " + private_ip_address + " and NO public IP address"
+                try:
+                    instance_details = describe_instance(new_instance['InstanceId'])
+                    private_ip_address = instance_details['PrivateIpAddress']
+                    if 'PublicIpAddress' in instance_details:
+                        public_ip_address = instance_details['PublicIpAddress']
+                        print "Found new instance " + new_instance['InstanceId'] + " with private IP address " + private_ip_address + " and public IP " + public_ip_address
+                    else:
+                        print "Found new instance " + new_instance['InstanceId'] + " with private IP address " + private_ip_address + " and NO public IP address"
 
-                tmpcommand = str(options.checkifnewserverisupcommand)
-                tmpcommand = tmpcommand.replace('NEW_INSTANCE_ID',new_instance['InstanceId'])
-                tmpcommand = tmpcommand.replace('NEW_INSTANCE_PRIVATE_IP_ADDRESS', private_ip_address)
-                if 'PublicIpAddress' in instance_details:
-                    tmpcommand = tmpcommand.replace('NEW_INSTANCE_PUBLIC_IP_ADDRESS', public_ip_address)
-                print "Executing external health shell command: " + tmpcommand
-                retval = call(tmpcommand, shell=True)
-                # print "Got return value " + str(retval)
-                if (retval != 0):
-                    succeeded_health_up_check = False
+                    tmpcommand = str(options.checkifnewserverisupcommand)
+                    tmpcommand = tmpcommand.replace('NEW_INSTANCE_ID',new_instance['InstanceId'])
+                    tmpcommand = tmpcommand.replace('NEW_INSTANCE_PRIVATE_IP_ADDRESS', private_ip_address)
+                    if 'PublicIpAddress' in instance_details:
+                        tmpcommand = tmpcommand.replace('NEW_INSTANCE_PUBLIC_IP_ADDRESS', public_ip_address)
+                    print "Executing external health shell command: " + tmpcommand
+                    retval = call(tmpcommand, shell=True)
+                    # print "Got return value " + str(retval)
+                    if (retval != 0):
+                        succeeded_health_up_check = False
+                except:
+                    print "WARNING: Failed trying to figure out if new instance is healthy"
 
             if succeeded_health_up_check:
                 print "SUCCESS: We are done checking instances with a custom command"
