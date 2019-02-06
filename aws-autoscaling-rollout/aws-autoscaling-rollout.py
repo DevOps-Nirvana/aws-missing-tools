@@ -87,7 +87,7 @@ parser.add_option("-d", "--run-after-server-going-down-command",
                   dest="runafterserverdowncommand",
                   default="",
                   help="An external command to run before a server goes down, this is run BEFORE the wait-for-seconds.  This should be a valid 'shell' command that can run on this server.  This command supports _simple_ templating in the form of string replacing OLD_INSTANCE_ID, OLD_INSTANCE_PRIVATE_IP_ADDRESS, OLD_INSTANCE_PUBLIC_IP_ADDRESS.  Often used to do stuff like pull a server out of a cluster (eg: to force-leave Consul).  This command MUST return a retval of 0 otherwise this deployment will halt.",
-              /    metavar="command")
+                  metavar="command")
 (options, args) = parser.parse_args()
 
 # Startup simple checks...
