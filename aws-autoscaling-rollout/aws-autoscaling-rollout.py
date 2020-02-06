@@ -88,6 +88,10 @@ parser.add_option("-d", "--run-after-server-going-down-command",
                   default="",
                   help="An external command to run before a server goes down, this is run BEFORE the wait-for-seconds.  This should be a valid 'shell' command that can run on this server.  This command supports _simple_ templating in the form of string replacing OLD_INSTANCE_ID, OLD_INSTANCE_PRIVATE_IP_ADDRESS, OLD_INSTANCE_PUBLIC_IP_ADDRESS.  Often used to do stuff like pull a server out of a cluster (eg: to force-leave Consul).  This command MUST return a retval of 0 otherwise this deployment will halt.",
                   metavar="command")
+parser.add_option("-c", "--check-if-instances-need-to-be-terminated",
+                  dest="checkifinstancesneedtobeterminated",
+                  action="store_true",
+                  help="Check if instance launch configuration or launch template is already updated.  This is useful in case the rollout fails and leave an Auto Scaling Group with a lot of instances partially updated.")
 (options, args) = parser.parse_args()
 
 # Startup simple checks...
@@ -207,6 +211,43 @@ def get_all_autoscaling_groups( ):
     except Exception as e:
         raise Exception("Error getting all autoscaling groups", e)
     raise Exception("Error getting all autoscaling groups")
+
+
+# Get autoscaling group configuration
+def get_autoscaling_group_configuration(autoscaler):
+    configuration = autoscaler.get('LaunchConfigurationName', None)
+    if not configuration:
+        configuration = autoscaler.get('MixedInstancesPolicy', None)
+        if configuration:
+            configuration = configuration['LaunchTemplate']['LaunchTemplateSpecification']['LaunchTemplateName']
+        else:
+            raise Exception(
+                "Error searching configuration for autoscaling group with name [{}]".format(autoscaler['AutoScalingGroupName']))
+    return configuration
+
+
+# Get instance configuration
+def get_instance_configuration(instance):
+    configuration = instance.get('LaunchConfigurationName', None)
+    if not configuration:
+        configuration = instance.get('LaunchTemplate', None)
+        if configuration:
+            configuration = configuration['LaunchTemplateName']
+        else:
+            raise Exception(
+                "Error searching configuration for instance with id [{}]".format(instance['InstanceId']))
+    return configuration
+
+
+# Return a list of instances to skip
+def get_instances_to_skip(instances, autoscaler):
+    output = []
+
+    for instance in instances:
+        if get_autoscaling_group_configuration(autoscaler) == get_instance_configuration(instance):
+            output.append(instance)
+
+    return output
 
 
 # Gets the suspended processes for an autoscaling group (by name or predefined to save API calls)
@@ -748,6 +789,13 @@ autoscaler = get_autoscaling_group(options.autoscaler)
 
 # Gather the instances we need to kill...
 instances_to_kill = get_autoscaler_healthy_instances(autoscaler)
+if options.checkifinstancesneedtobeterminated:
+    print("INFO: Checking if there are instances to skip")
+    instances_to_skip = get_instances_to_skip(instances_to_kill, autoscaler)
+    for instance in instances_to_skip:
+        print("DEBUG: Skiping instance " + instance['InstanceId'])
+        instances_to_kill.remove(instance)
+
 # Keep a tally of current instances...
 current_instance_list = get_autoscaler_healthy_instances(autoscaler)
 
@@ -768,8 +816,10 @@ def find_aws_instances_in_first_list_but_not_in_second( array_one, array_two ):
     return output
 
 # Increase our desired size by one so a new instance will be started (usually from a new launch configuration)
-print("Increasing desired capacity by one from " + str(autoscaler['DesiredCapacity']) + " to " + str(autoscaler['DesiredCapacity'] + 1))
-set_desired_capacity( options.autoscaler, autoscaler['DesiredCapacity'] + 1 )
+# Don't increase desired capacity if there is no instance to kill
+if len(instances_to_kill) > 0:
+    print("Increasing desired capacity by one from " + str(autoscaler['DesiredCapacity']) + " to " + str(autoscaler['DesiredCapacity'] + 1))
+    set_desired_capacity( options.autoscaler, autoscaler['DesiredCapacity'] + 1 )
 
 downscaled = False
 

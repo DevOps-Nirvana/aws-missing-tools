@@ -38,6 +38,9 @@ There are various options you can pass to aws-autoscaling-rollout to tweak its l
 ### --run-after-server-going-down-command
   This is an external command that will run after the server gets sent the terminate command.  **WARNING**: Due to possible delays in Amazon's API and other factors it is not guaranteed that the server will be completely down when this command is run.  This should be a valid 'shell' command that can run on this server.  This command supports _simple_ templating in the form of string replacing OLD_INSTANCE_ID, OLD_INSTANCE_PRIVATE_IP_ADDRESS, OLD_INSTANCE_PUBLIC_IP_ADDRESS.  Often used to do stuff like pull a server out of a custom monitoring system (eg: Zabbix/Nagios).  This command MUST return a retval of 0 otherwise this deployment will hal
 
+### --check-if-instances-need-to-be-terminated
+  Given an autoscaling group that is partially updated, i.e. some instances are already running with current configuration, we can skip such instances with this option specified. 
+
 
 ## Detailed Description:
 This script does a rollout of an autoscaling group gradually, while waiting/checking
