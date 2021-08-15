@@ -16,7 +16,7 @@
 #       not required but will make sure this script doesn't run an extra time
 #
 # This is from Farley's AWS missing tools
-#    https://github.com/AndrewFarley/farley-aws-missing-tools/
+#    https://github.com/DevOps-Nirvana/aws-missing-tools/
 #
 ###############################################################################
 #

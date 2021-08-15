@@ -19,7 +19,7 @@
 #          it will have unexpected and most likely undesired results.  So be warned!!!!!!!
 #
 # The latest version of this code and more documentation can be found at:
-#       https://github.com/AndrewFarley/farley-aws-missing-tools
+#       https://github.com/DevOps-Nirvana/aws-missing-tools
 #
 # Author:
 #       Farley <farley@neonsurge.com> <farley@olindata.com>

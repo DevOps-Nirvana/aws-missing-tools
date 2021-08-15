@@ -19,7 +19,7 @@ curl http://s3.amazonaws.com/ec2metadata/ec2-metadata > /usr/local/bin/ec2-metad
 ```
 or from here incase that disappears...
 ```
-curl https://raw.githubusercontent.com/AndrewFarley/farley-aws-missing-tools/master/ec2-metadata/ec2-metadata > /usr/local/bin/ec2-metadata
+curl https://raw.githubusercontent.com/DevOps-Nirvana/aws-missing-tools/master/ec2-metadata/ec2-metadata > /usr/local/bin/ec2-metadata
 ```
 
 ## Directions For Use:
