@@ -1,0 +1,79 @@
+#!/bin/bash
+#####################################
+# This script logs in via 2FA for an IAM Access/Secret Key.
+#
+# This script assumes you're already having a working AWS CLI and profile
+# If you are using AWS CLI profiles, make sure you set your profile before running
+# this script with eg: `export SOURCE_PROFILE=mycompany` which is the same
+# name you used to `aws configure --profile mycompany`.
+#
+# For a helper for this, see: https://github.com/DevOps-Nirvana/aws-missing-tools/tree/master/aws-choose-profile
+#   OR...
+# Make some aliases in your .bash_profile which instantly choose the org and label.  For example try this command...
+#    AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-virtual-mfa
+# and if that works, make an alias in your ~/.bash_profile like this...
+#    echo "alias mycompany_aws_2fa='AWS_DEFAULT_PROFILE=mycompany-aws-root ASSUME_ROLE_LABEL=mycompany aws-virtual-mfa'" >> ~/.bash_profile
+# begin using it instantly
+#    source ~/.bash_profile
+# then run it with...
+#    mycompany_aws_2fa
+#####################################
+
+# First, try to get our username so we know our MFA device path from it, this also checks if our CLI is functional
+echo "Checking if you have a function awscli / active profile"
+echo "aws sts get-caller-identity"
+data=$(aws sts get-caller-identity)
+export AWS_ACCOUNT_ID=$(echo -- "$data" | sed -n 's!.*"Account": "\(.*\)".*!\1!p')
+export AWS_USER_ARN=$(echo -- "$data" | sed -n 's!.*"Arn": "\(.*\)".*!\1!p')
+export AWS_MFA_DEVICE_ARN=$(echo "$AWS_USER_ARN" | sed 's|user/|mfa/|')
+if [ ! -n "$AWS_MFA_DEVICE_ARN" ]; then
+    echo ""
+    echo "Error, the call to 'aws sts get-caller-identity' failed, you either: "
+    echo " * Never setup your CLI with aws configure, or "
+    echo " * You forgo to choose a profile by running..."
+    echo "        export SOURCE_PROFILE=mycompany"
+    echo ""
+    exit 1
+fi
+
+# If you need to override this so you have a sex(ier) name for your organization please run...
+#    ASSUME_ROLE_LABEL=mycompanyname aws-virtual-mfa
+export ASSUME_ROLE_LABEL=${ASSUME_ROLE_LABEL-$AWS_ACCOUNT_ID-2FA}
+
+# Output for debugging / informational purposes
+echo "Found AWS Account ID: $AWS_ACCOUNT_ID"
+echo "Found AWS User ARN: $AWS_USER_ARN"
+echo "Using Assume Role Label: $ASSUME_ROLE_LABEL"
+
+# Prompt user for 2FA code
+while true; do
+    read -p "Please type in your MFA code: " MFA_CODE
+    if [ "MFA_CODE" == "" ]; then
+      echo "Error, no input found..."
+    else
+      break
+    fi
+done
+
+# Define and/or unset relevant variables and necessary files
+unset AWS_SESSION_TOKEN AWS_PROFILE AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+
+# Assume role
+echo "Trying to process 2FA for to $ASSUME_ROLE_LABEL"
+echo "aws sts get-session-token --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE"
+tokens=$(aws sts get-session-token --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE)
+if [ "$?" -ne 0 ]; then
+  echo $tokens
+  echo "Error while trying to enable 2fa"
+  exit 1
+fi
+
+echo "Parsing credentials..."
+export AWS_ACCESS_KEY_ID=$(echo -- "$tokens" | sed -n 's!.*"AccessKeyId": "\(.*\)".*!\1!p')
+export AWS_SECRET_ACCESS_KEY=$(echo -- "$tokens" | sed -n 's!.*"SecretAccessKey": "\(.*\)".*!\1!p')
+export AWS_SESSION_TOKEN=$(echo -- "$tokens" | sed -n 's!.*"SessionToken": "\(.*\)".*!\1!p')
+
+# Enter a subshell with permissions of assumed role
+echo "Entering subshell..."
+bash --rcfile <(echo '. ~/.bash_profile && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
+echo "Exiting subshell..."
