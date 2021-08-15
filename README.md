@@ -1,4 +1,4 @@
-# Farley's AWS Missing Tools
+# AWS Missing Tools
 Random tools and helpers I've written that come in handy that are generally missing in the Amazon CLI Tools.  These tools all extend/expand on the Amazon AWS CLI tools which must be installed for any of these to work.
 
 *NOTE*: This repository is a always a constant work in progress.
