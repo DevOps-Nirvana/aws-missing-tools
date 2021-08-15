@@ -560,7 +560,7 @@ def wait_for_instances_to_detach_from_target_group( instance_ids, target_group_a
 
         failures = 0
         for instance in instance_ids:
-            print("  DEBUG: Checking if " + instance + " is attached to load balancer...")
+            print("  DEBUG: Checking if " + instance + " is attached to target group...")
             if instance in instance_health_flat:
                 print("    ERROR: Currently attached to the target group...")
                 failures = failures + 1
