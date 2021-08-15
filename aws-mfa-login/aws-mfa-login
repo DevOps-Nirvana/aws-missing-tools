@@ -10,9 +10,9 @@
 # For a helper for this, see: https://github.com/DevOps-Nirvana/aws-missing-tools/tree/master/aws-choose-profile
 #   OR...
 # Make some aliases in your .bash_profile which instantly choose the org and label.  For example try this command...
-#    AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-virtual-mfa
+#    AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-mfa-login
 # and if that works, make an alias in your ~/.bash_profile like this...
-#    echo "alias mycompany_aws_2fa='AWS_DEFAULT_PROFILE=mycompany-aws-root ASSUME_ROLE_LABEL=mycompany aws-virtual-mfa'" >> ~/.bash_profile
+#    echo "alias mycompany_aws_2fa='AWS_DEFAULT_PROFILE=mycompany-aws-root ASSUME_ROLE_LABEL=mycompany aws-mfa-login'" >> ~/.bash_profile
 # begin using it instantly
 #    source ~/.bash_profile
 # then run it with...
@@ -37,7 +37,7 @@ if [ ! -n "$AWS_MFA_DEVICE_ARN" ]; then
 fi
 
 # If you need to override this so you have a sex(ier) name for your organization please run...
-#    ASSUME_ROLE_LABEL=mycompanyname aws-virtual-mfa
+#    ASSUME_ROLE_LABEL=mycompanyname aws-mfa-login
 export ASSUME_ROLE_LABEL=${ASSUME_ROLE_LABEL-$AWS_ACCOUNT_ID-2FA}
 
 # Output for debugging / informational purposes

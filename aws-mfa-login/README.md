@@ -11,10 +11,10 @@ OR...
 
 ```
 # First, try this command (replace mycompany with your awscli profile name and the name of your aws account alias or company name)
-AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-virtual-mfa
+AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-mfa-login
 
 # and if that works, make an alias in your ~/.bash_profile like this...
-echo "alias mycompany_aws_2fa='AWS_DEFAULT_PROFILE=mycompany-aws-root ASSUME_ROLE_LABEL=mycompany aws-virtual-mfa'" >> ~/.bash_profile
+echo "alias mycompany_aws_2fa='AWS_DEFAULT_PROFILE=mycompany-aws-root ASSUME_ROLE_LABEL=mycompany aws-mfa-login'" >> ~/.bash_profile
 
 # begin using it instantly
 source ~/.bash_profile
