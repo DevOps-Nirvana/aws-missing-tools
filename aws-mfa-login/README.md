@@ -23,6 +23,6 @@ source ~/.bash_profile
 mycompany_aws_2fa
 ```
 
-This combos nicely with the [AWS IAM Require MFA Allow Self Service Profile](../aws-iequire-mfa-allow-self-service) which is an IAM Profile which enforces 2FA for AWS IAM Access Keys which makes them inherently less sensitive.  This would prevent a potential security/privacy leak in your organization if someone accidentally committed their access/secret keys somewhere (like Github).
+This combos nicely with the [AWS IAM Require MFA Allow Self Service Profile](../aws-iam-require-mfa-allow-self-service) which is an IAM Profile which enforces 2FA for AWS IAM Access Keys which makes them inherently less sensitive.  This would prevent a potential security/privacy leak in your organization if someone accidentally committed their access/secret keys somewhere (like Github).
 
 This allows you to skip having to setup complex client-side systems for your employees such as [AWS Vault](https://github.com/99designs/aws-vault) to try to encrypt your dev credentials, instead leveraging industry-standard 2FA.
