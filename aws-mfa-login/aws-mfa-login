@@ -29,8 +29,11 @@ export AWS_MFA_DEVICE_ARN=$(echo "$AWS_USER_ARN" | sed 's|user/|mfa/|')
 if [ ! -n "$AWS_MFA_DEVICE_ARN" ]; then
     echo ""
     echo "Error, the call to 'aws sts get-caller-identity' failed, you either: "
+    echo ""
+    echo " * Your subshell session expired, aka you ran this before and 24 hours have passed"
+    echo "       if so, simply type 'exit' and re-try this command"
     echo " * Never setup your CLI with aws configure, or "
-    echo " * You forgo to choose a profile by running..."
+    echo " * You forgot to choose a profile by running..."
     echo "        export SOURCE_PROFILE=mycompany"
     echo ""
     exit 1
@@ -74,6 +77,6 @@ export AWS_SECRET_ACCESS_KEY=$(echo -- "$tokens" | sed -n 's!.*"SecretAccessKey"
 export AWS_SESSION_TOKEN=$(echo -- "$tokens" | sed -n 's!.*"SessionToken": "\(.*\)".*!\1!p')
 
 # Enter a subshell with permissions of assumed role
-echo "Entering subshell..."
+echo "Entering subshell, 2FA session valid for 24 hours"
 bash --rcfile <(echo '. ~/.bash_profile && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
 echo "Exiting subshell..."
