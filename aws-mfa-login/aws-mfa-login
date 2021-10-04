@@ -21,6 +21,10 @@
 
 # First, try to get our username so we know our MFA device path from it, this also checks if our CLI is functional
 echo "Checking if you have a function awscli / active profile"
+
+# This script uses JSON output, so we'll set this here forcibly
+export AWS_DEFAULT_OUTPUT="json"
+
 echo "aws sts get-caller-identity"
 data=$(aws sts get-caller-identity)
 export AWS_ACCOUNT_ID=$(echo -- "$data" | sed -n 's!.*"Account": "\(.*\)".*!\1!p')
