@@ -63,7 +63,7 @@ while true; do
 done
 
 # Define and/or unset relevant variables and necessary files
-unset AWS_SESSION_TOKEN AWS_PROFILE AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+unset AWS_SESSION_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 
 # Assume role
 echo "Trying to process 2FA for to $ASSUME_ROLE_LABEL"
@@ -82,5 +82,5 @@ export AWS_SESSION_TOKEN=$(echo -- "$tokens" | sed -n 's!.*"SessionToken": "\(.*
 
 # Enter a subshell with permissions of assumed role
 echo "Entering subshell, 2FA session valid for 24 hours"
-bash --rcfile <(echo '. ~/.bash_profile && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
+bash --rcfile <(echo 'unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
 echo "Exiting subshell..."
