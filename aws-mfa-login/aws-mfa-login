@@ -82,5 +82,24 @@ export AWS_SESSION_TOKEN=$(echo -- "$tokens" | sed -n 's!.*"SessionToken": "\(.*
 
 # Enter a subshell with permissions of assumed role
 echo "Entering subshell, 2FA session valid for 24 hours"
-bash --rcfile <(echo 'unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
+
+# Get parent shell by comparing $PPID to ps aux output and grabbing process name
+typeset parentshell=$(
+ps aux | while IFS= read -r line; do
+  shellpid=$(echo $line | awk '{print $2}')
+  if [[ "$shellpid" -eq "$PPID" ]]; then
+    echo $line | awk '{print $11}'
+  fi
+done)
+
+# Spawn subshell based on parent shell process name
+if [ $parentshell = zsh ]; then
+  mkdir ~/.zshrc_1 2> /dev/null
+  echo 'source ~/.zshrc' > ~/.zshrc_1/.zshrc
+  echo 'unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"' >> ~/.zshrc_1/.zshrc
+  ZDOTDIR=~/.zshrc_1 zsh 2> /dev/null
+elif [ $parentshell = bash ]; then
+  bash --rcfile <(echo 'unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
+fi
+
 echo "Exiting subshell..."
