@@ -1,10 +1,12 @@
 #!/bin/bash
 #####################################
 # This script logs in via 2FA for an IAM Access/Secret Key.
+# OR
+# This script allows assuming into an role via 2FA if ASSUME_ROLE_ARN is set
 #
 # This script assumes you're already having a working AWS CLI and profile
 # If you are using AWS CLI profiles, make sure you set your profile before running
-# this script with eg: `export SOURCE_PROFILE=mycompany` which is the same
+# this script with eg: `export AWS_DEFAULT_PROFILE=mycompany` which is the same
 # name you used to `aws configure --profile mycompany`.
 #
 # For a helper for this, see: https://github.com/DevOps-Nirvana/aws-missing-tools/tree/master/aws-choose-profile
@@ -17,6 +19,11 @@
 #    source ~/.bash_profile
 # then run it with...
 #    mycompany_aws_2fa
+#
+# For use to assume into an role (eg: in the same or another account) you'll need one more variable to pass in...
+#    ASSUME_ROLE_ARN=arn:aws:iam::1231231234:role/role_name_here AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-mfa-login
+# If you get an error about "session duration" you may need to lower your duration by setting SESSION_DURATION which is set to 43200 (12 hours) by default down to 3600 (1 hour)
+#    SESSION_DURATION=3600 ASSUME_ROLE_ARN=arn:aws:iam::1231231234:role/role_name_here AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-mfa-login
 #####################################
 
 # First, try to get our username so we know our MFA device path from it, this also checks if our CLI is functional
@@ -30,15 +37,16 @@ data=$(aws sts get-caller-identity)
 export AWS_ACCOUNT_ID=$(echo -- "$data" | sed -n 's!.*"Account": "\(.*\)".*!\1!p')
 export AWS_USER_ARN=$(echo -- "$data" | sed -n 's!.*"Arn": "\(.*\)".*!\1!p')
 export AWS_MFA_DEVICE_ARN=$(echo "$AWS_USER_ARN" | sed 's|user/|mfa/|')
+echo "Using MFA: $AWS_MFA_DEVICE_ARN"
 if [ ! -n "$AWS_MFA_DEVICE_ARN" ]; then
     echo ""
     echo "Error, the call to 'aws sts get-caller-identity' failed, you either: "
     echo ""
-    echo " * Your subshell session expired, aka you ran this before and 24 hours have passed"
+    echo " * Never setup your CLI with 'aws configure', or "
+    echo " * Your subshell session expired, aka you ran this and your session expired"
     echo "       if so, simply type 'exit' and re-try this command"
-    echo " * Never setup your CLI with aws configure, or "
     echo " * You forgot to choose a profile by running..."
-    echo "        export SOURCE_PROFILE=mycompany"
+    echo "        export AWS_DEFAULT_PROFILE=mycompany && $0"
     echo ""
     exit 1
 fi
@@ -52,6 +60,17 @@ echo "Found AWS Account ID: $AWS_ACCOUNT_ID"
 echo "Found AWS User ARN: $AWS_USER_ARN"
 echo "Using Assume Role Label: $ASSUME_ROLE_LABEL"
 
+# Detect if we want to assume an specific role instead of just 2FA as our user
+if [ -z "$ASSUME_ROLE_ARN" ]; then
+  echo "No ASSUME_ROLE_ARN found, we are 2FA-ing for our current user"
+  HRS="12"
+else
+  echo "Found Assume Role: $ASSUME_ROLE_ARN"
+  SESSION_DURATION=${SESSION_DURATION-43200}  # In seconds, by default we allow 12 hours
+  HRS=`expr ${SESSION_DURATION} / 3600`
+  echo "Using SESSION_DURATION of: $HRS hours"
+fi
+
 # Prompt user for 2FA code
 while true; do
     read -p "Please type in your MFA code: " MFA_CODE
@@ -62,16 +81,21 @@ while true; do
     fi
 done
 
-# Define and/or unset relevant variables and necessary files
-unset AWS_SESSION_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-
 # Assume role
-echo "Trying to process 2FA for to $ASSUME_ROLE_LABEL"
-echo "aws sts get-session-token --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE"
-tokens=$(aws sts get-session-token --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE)
+if [ -z "$ASSUME_ROLE_ARN" ]; then
+  echo "Trying to process 2FA for to $ASSUME_ROLE_LABEL"
+  echo "aws sts get-session-token --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE"
+  tokens=$(aws sts get-session-token --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE)
+else
+  echo "Trying to assume role with 2FA into: $ASSUME_ROLE_ARN"
+  echo "aws sts assume-role --role-arn $ASSUME_ROLE_ARN --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE --role-session-name cli-2fa-assume-role --duration-seconds $SESSION_DURATION"
+  tokens=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --serial-number $AWS_MFA_DEVICE_ARN --token-code $MFA_CODE --role-session-name cli-2fa-assume-role --duration-seconds $SESSION_DURATION)
+fi
+
+# Validate the tokens are there
 if [ "$?" -ne 0 ]; then
   echo $tokens
-  echo "Error while trying to enable 2fa"
+  echo "Error while trying to enable 2FA and/or assume role"
   exit 1
 fi
 
@@ -79,27 +103,35 @@ echo "Parsing credentials..."
 export AWS_ACCESS_KEY_ID=$(echo -- "$tokens" | sed -n 's!.*"AccessKeyId": "\(.*\)".*!\1!p')
 export AWS_SECRET_ACCESS_KEY=$(echo -- "$tokens" | sed -n 's!.*"SecretAccessKey": "\(.*\)".*!\1!p')
 export AWS_SESSION_TOKEN=$(echo -- "$tokens" | sed -n 's!.*"SessionToken": "\(.*\)".*!\1!p')
+export AWS_SESSION_EXPIRATION_TIME=$(echo -- "$tokens" | sed -n 's!.*"Expiration": "\(.*\)".*!\1!p')
+echo "Session expires at: $AWS_SESSION_EXPIRATION_TIME UTC (in $HRS hours)"
 
 # Enter a subshell with permissions of assumed role
-echo "Entering subshell, 2FA session valid for 24 hours"
+echo "Entering subshell..."
 
-# Get parent shell by comparing $PPID to ps aux output and grabbing process name
-typeset parentshell=$(
-ps aux | while IFS= read -r line; do
-  shellpid=$(echo $line | awk '{print $2}')
-  if [[ "$shellpid" -eq "$PPID" ]]; then
-    echo $line | awk '{print $11}'
-  fi
-done)
+# Alternatively to $SHELL, get parent shell by comparing $PPID to ps aux output and grabbing process name
+# typeset parentshell=$(
+# ps aux | while IFS= read -r line; do
+#   shellpid=$(echo $line | awk '{print $2}')
+#   if [[ "$shellpid" -eq "$PPID" ]]; then
+#     echo $line | awk '{print $11}'
+#   fi
+# done)
+# Get shell for this user's defaults
 
 # Spawn subshell based on parent shell process name
-if [ $parentshell = zsh ]; then
+if [[ $SHELL == *"zsh"* ]]; then
   mkdir ~/.zshrc_1 2> /dev/null
   echo 'source ~/.zshrc' > ~/.zshrc_1/.zshrc
-  echo 'unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"' >> ~/.zshrc_1/.zshrc
+  echo 'unset AWS_PROFILE AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"' >> ~/.zshrc_1/.zshrc
   ZDOTDIR=~/.zshrc_1 zsh 2> /dev/null
-elif [ $parentshell = bash ]; then
-  bash --rcfile <(echo 'unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
+elif [[ $SHELL == *"bash"* ]]; then
+  touch ~/.bashrc
+  touch ~/.bash_profile
+  bash --rcfile <(echo 'source ~/.bashrc && source ~/.bash_profile && unset AWS_PROFILE AWS_DEFAULT_PROFILE && PS1="$ASSUME_ROLE_LABEL $PS1"')
+else
+  echo "Unknown or invalid shell: $parentshell"
+  exit 1
 fi
 
 echo "Exiting subshell..."
