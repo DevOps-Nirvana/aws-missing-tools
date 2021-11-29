@@ -15,8 +15,12 @@
 #    AWS_DEFAULT_PROFILE=mycompany ASSUME_ROLE_LABEL=mycompany aws-mfa-login
 # and if that works, make an alias in your ~/.bash_profile like this...
 #    echo "alias mycompany_aws_2fa='AWS_DEFAULT_PROFILE=mycompany-aws-root ASSUME_ROLE_LABEL=mycompany aws-mfa-login'" >> ~/.bash_profile
+# or if using zsh, make an alias in your ~/.zshrc like this...
+#    echo "alias mycompany_aws_2fa='AWS_DEFAULT_PROFILE=mycompany-aws-root ASSUME_ROLE_LABEL=mycompany aws-mfa-login'" >> ~/.zshrc
 # begin using it instantly
 #    source ~/.bash_profile
+# or
+#    source ~/.zshrc
 # then run it with...
 #    mycompany_aws_2fa
 #
