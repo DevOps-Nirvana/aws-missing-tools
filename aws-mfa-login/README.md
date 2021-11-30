@@ -73,11 +73,13 @@ mycompany_aws_2fa
 
 ## Example: User with Mandatory 2FA
 
-This combos nicely with the [AWS IAM Require MFA Allow Self Service Profile](../aws-iam-require-mfa-allow-self-service/) which is an IAM Profile which enforces 2FA for AWS IAM Access Keys which makes them inherently less sensitive.  This would prevent a potential security/privacy leak in your organization if someone accidentally committed their access/secret keys somewhere (like Github).
+The aws-mfa-login tool combos nicely with the below self-service IAM profile which enforces 2FA for AWS IAM Access Keys which makes them inherently less sensitive.  This would prevent a potential security/privacy leak in your organization if someone accidentally committed their access/secret keys somewhere (like Github).
 
 This allows you to skip having to setup complex client-side systems for your employees such as [AWS Vault](https://github.com/99designs/aws-vault) to try to encrypt your IAM access-keys/secrets, instead leveraging industry-standard 2FA on top of your existing Access/Secret credential pairs.
 
-Below is the JSON copied from the above link for [AWS IAM Require MFA Allow Self Service Profile](../aws-iam-require-mfa-allow-self-service/) for your reference, this is an ideal and battle-tested configuration allowing a user to self-manage themselves enough with no MFA to enable it, and then allowing a standard amount of read/list operations that most users would appreciate from the get-go and to prevent a ton of errors in the AWS Console.  It's a combination of a few recommended permissions from various AWS articles.
+Below is the JSON copied from [AWS IAM Require MFA Allow Self Service Profile](../aws-iam-require-mfa-allow-self-service/) for your reference, this is an ideal and battle-tested configuration allowing a user to self-manage themselves enough with no MFA to enable it, and then allowing a standard amount of read/list operations that most users would appreciate from the get-go and to prevent a ton of errors in the AWS Console.  It's a combination of a few recommended permissions from various AWS articles.
+
+A recommended setup would be to assign this Profile to an AWS Group (eg: called "mandatory-2fa") and then assign it to all your _actual_ users (NOT service account users, eg: SES email user) to ensure org-wide mandatory 2FA policies.
 
 ```json
 {
