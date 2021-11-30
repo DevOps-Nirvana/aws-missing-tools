@@ -8,9 +8,9 @@ This script makes an AWS Access Key / Secret Key login via 2FA on your CLI, or a
 * Preserves your region if set on the source role/account
 * Currently only supports the Virtual MFA, send a PR if you wish to add others
 * Prevents potential huge security issues leaking because of accidentally committed access/secret keys to SCM/Git
-  * _**NOTE:** When combined with [AWS IAM Require MFA Allow Self Service Profile](../aws-iam-require-mfa-allow-self-service/)_
+  * _**NOTE:** When combined with [AWS IAM Require MFA Allow Self Service Profile](#example-user-with-mandatory-2fa)_
 * Allows you to ensure better/best security practices on AWS, making all your roles mandatory 2FA to assume into them.
-  * _**NOTE:** See example below for roles with mandatory 2FA on them
+  * _**NOTE:** See [example below](#example-role-with-mandatory-2fa) for roles with mandatory 2FA on them_
 
 This script assumes you're already having a working AWS CLI and profile.  If you are using AWS CLI profiles, make sure you set your profile before running this script with eg: `export SOURCE_PROFILE=mycompany` which is the same name you used to `aws configure --profile mycompany`.
 
