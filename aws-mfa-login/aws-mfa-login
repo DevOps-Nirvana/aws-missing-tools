@@ -55,6 +55,14 @@ if [ ! -n "$AWS_MFA_DEVICE_ARN" ]; then
     exit 1
 fi
 
+echo "aws configure get region"
+AUTODETECTED_REGION=$(aws configure get region)
+if [ -z "$AUTODETECTED_REGION" ]; then
+  echo "No default region detected, not setting any region as default, likely to use us-east-1 as default"
+else
+  echo "Using region: $AUTODETECTED_REGION"
+fi
+
 # If you need to override this so you have a sex(ier) name for your organization please run...
 #    ASSUME_ROLE_LABEL=mycompanyname aws-mfa-login
 export ASSUME_ROLE_LABEL=${ASSUME_ROLE_LABEL-$AWS_ACCOUNT_ID-2FA}
@@ -109,6 +117,11 @@ export AWS_SECRET_ACCESS_KEY=$(echo -- "$tokens" | sed -n 's!.*"SecretAccessKey"
 export AWS_SESSION_TOKEN=$(echo -- "$tokens" | sed -n 's!.*"SessionToken": "\(.*\)".*!\1!p')
 export AWS_SESSION_EXPIRATION_TIME=$(echo -- "$tokens" | sed -n 's!.*"Expiration": "\(.*\)".*!\1!p')
 echo "Session expires at: $AWS_SESSION_EXPIRATION_TIME UTC (in $HRS hours)"
+
+if [ ! -z "$AUTODETECTED_REGION" ]; then
+  echo "Setting region to: $AUTODETECTED_REGION"
+  export AWS_DEFAULT_REGION=$AUTODETECTED_REGION
+fi
 
 # Enter a subshell with permissions of assumed role
 echo "Entering subshell..."
