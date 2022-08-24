@@ -12,8 +12,8 @@
 
 # Libraries
 # Config parsing
-import ConfigParser
-Config = ConfigParser.ConfigParser()
+import configparser
+Config = configparser.ConfigParser()
 # For homedir and isfile
 import os
 home_dir = os.path.expanduser("~")
@@ -41,20 +41,20 @@ def represents_int(s):
 debug_output = False
 write_output_to_file = False
 if debug_output:
-    print "Starting up..."
+    print("Starting up...")
 
 # Check for CLI args (used to determine where to write the output/result)
 if len(sys.argv) >= 2:
     write_output_to_file = sys.argv.pop(1)
     if debug_output:
-        print "Writing chosen profile to: " + temp
+        print("Writing chosen profile to: " + temp)
     if os.path.isfile(write_output_to_file):
         if debug_output:
-            print "Removing chosen profile temp file"
+            print("Removing chosen profile temp file")
         os.remove(write_output_to_file)
 else:
     if debug_output:
-        print "Echoing out chosen profile to screen"
+        print("Echoing out chosen profile to screen")
 
 # We always have a "default" profile
 profiles = []
@@ -63,31 +63,31 @@ profiles.append('default')
 # Read our credentials file
 if os.path.isfile(home_dir + "/.aws/credentials"):
     if debug_output:
-        print "Reading from " + home_dir + "/.aws/credentials..."
+        print("Reading from " + home_dir + "/.aws/credentials...")
     Config.read(home_dir + "/.aws/credentials")
     
     # Debug output
     if debug_output:
-        print "Got the following profiles..."
-        print Config.sections()
+        print("Got the following profiles...")
+        print(Config.sections())
 
     for item in Config.sections():
         if not contains_value(profiles, item):
             profiles.append(item)
 else:
     if debug_output:
-        print "No file to read from at " + home_dir + "/.aws/credentials"
+        print("No file to read from at " + home_dir + "/.aws/credentials")
 
 # Read our config file
 if os.path.isfile(home_dir + "/.aws/credentials"):
     if debug_output:
-        print "Reading from " + home_dir + "/aws/config..."
+        print("Reading from " + home_dir + "/aws/config...")
     Config.read(home_dir + "/.aws/config")
     
     # Debug output
     if debug_output:
-        print "Got the following profiles..."
-        print Config.sections()
+        print("Got the following profiles...")
+        print(Config.sections())
 
     for item in Config.sections():
         # First, cleanse our "profile " prefix
@@ -95,7 +95,7 @@ if os.path.isfile(home_dir + "/.aws/credentials"):
         if not contains_value(profiles, cleanitem):
             profiles.append(cleanitem)
 else:
-    print "No file to read from at " + home_dir + "/.aws/config"
+    print("No file to read from at " + home_dir + "/.aws/config")
 
 # Finally sort alphabetically
 sorted(profiles, key=str.lower)
@@ -106,36 +106,36 @@ if debug_output:
     print(profiles)
 
 # Print profiles available
-print "==============================="
-print " Profiles available"
-print "==============================="
+print("===============================")
+print(" Profiles available")
+print("===============================")
 count = 1
 for profile in profiles:
-    print str(count) + ". " + profile
+    print(str(count) + ". " + profile)
     count = count + 1
-print "==============================="
+print("===============================")
 count = count - 1
 
 # Ask the user to choose a profile infinitely
 while True:
-    var = raw_input("Choose a profile number: [1-" + str(count) + "]: ")
+    var = input("Choose a profile number: [1-" + str(count) + "]: ")
 
     if represents_int(var) and int(var) > 0 and int(var) <= count:
         break;
     else:
-        print "Invalid input"
+        print("Invalid input")
 var = str(int(var) - 1)
 
 # Take the chosen profile and print or write it to a file
 chosen = profiles.pop(int(var))
 if debug_output:
-    print "You chose: " + chosen
+    print("You chose: " + chosen)
 if write_output_to_file == False:
     if debug_output:
-        print "Printing to screen"
-    print chosen
+        print("Printing to screen")
+        print(chosen)
 else:
-    print "Writing output to file " + write_output_to_file
+    print("Writing output to file " + write_output_to_file)
     text_file = open(write_output_to_file, "w")
     text_file.write(chosen)
     text_file.close()
