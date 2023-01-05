@@ -72,7 +72,7 @@ import os
 max_age = 21600
 
 # Whether or not to output debug info as it does things
-debug = False
+debug = bool(os.environ.get('LOG_DEBUG'))
 
 # Our AWS regions, we'll call the AWS API to get the list of regions, so this is always up to date
 ec2 = boto3.client('ec2', region_name='us-west-1')
@@ -145,20 +145,12 @@ def get_zombie_packer_instances(regions, maximum_age):
                         print("  Instance is not currently running, skipping...")
                     continue
 
-                packerNameTagMatched = False
-                if 'Tags' in instance:
-                    for tag in instance['Tags']:
-                        if tag['Key'] == 'Name' and tag['Value'] == 'Packer Builder':
-                            if debug is True:
-                                print("  Instance is a packer builder")
-                            packerNameTagMatched = True
-                            break
-                        elif tag['Key'] == 'Name':
-                            if debug is True:
-                                print("  Instance is NOT a packer building, skipping...")
-                            break
-
-                if packerNameTagMatched is False:
+                if instance.get('KeyName', '').startswith('packer_'):
+                    if debug is True:
+                        print("  Instance is a packer builder")
+                else:
+                    if debug is True:
+                        print("  Instance is NOT a packer building, skipping...")
                     continue
 
                 if debug is True:
@@ -166,7 +158,6 @@ def get_zombie_packer_instances(regions, maximum_age):
                 launched_at = dt2ts(instance['LaunchTime'])
                 if debug is True:
                     print(f"    Instance started {display_time(utc_now_ts - launched_at)} ago ")
-                # if (utc_now_ts - launched_at) > 86400:
                 if (utc_now_ts - launched_at) > maximum_age:
                     if debug is True:
                         print("    Instance started more than a day ago, should be marked for termination")
@@ -189,7 +180,7 @@ def get_zombie_packer_keys(regions):
     for region in regions:
         regionoutput = []
         if debug is True:
-            print("Scanning region {region} for keys")
+            print(f"Scanning region {region} for keys")
 
         # Create our EC2 Handler
         ec2 = boto3.client('ec2', region_name=region)
@@ -198,7 +189,7 @@ def get_zombie_packer_keys(regions):
             Filters=[
                 {
                     'Name': 'key-name',
-                    'Values': ['packer *'],
+                    'Values': ['packer_*'],
                 },
             ]
         )
@@ -244,9 +235,10 @@ def lambda_handler(event, context):
     print(f"Scanning {len(regions)} AWS regions for zombie packer instances...")
 
     zombies = get_zombie_packer_instances(regions, max_age)
+
     for region,instances in zombies.items():
         if len(instances) == 0:
-            print("Found NO zombie instances in {region}, skipping...")
+            print(f"Found NO zombie instances in {region}, skipping...")
             continue
 
         print(f"Found {len(instances)} zombie packer instances in {region}, now terminating...")
@@ -291,7 +283,7 @@ def lambda_handler(event, context):
     zombies = get_zombie_packer_security_groups(regions)
     for region,security_groups in zombies.items():
         if len(security_groups) == 0:
-            print("Found NO zombie security groups in " + region + ", skipping...")
+            print(f"Found NO zombie security groups in {region}, skipping...")
             continue
 
         print(f"Found {len(security_groups)} zombie security groups in {region}, now terminating...")
